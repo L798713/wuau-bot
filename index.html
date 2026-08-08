@@ -14,7 +14,6 @@
         :root {
             --turquesa: #20B2AA;
             --turquesa-oscuro: #1a8a82;
-            --gris-oscuro: #2c3e50;
             --gris-claro: #f8f9fa;
             --blanco: #ffffff;
             --gris-texto: #555555;
@@ -239,16 +238,19 @@
             border-bottom-right-radius: 4px;
         }
 
-        /* BOTONES EN RESPUESTAS */
-        .response-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
+        /* BOTONES DE OPCIONES INTELIGENTES */
+        .response-options {
             margin-top: 10px;
             max-width: 80%;
         }
 
-        .response-btn {
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .option-btn {
             background: var(--turquesa);
             color: var(--blanco);
             border: none;
@@ -259,14 +261,15 @@
             cursor: pointer;
             transition: all 0.2s ease;
             text-align: center;
+            word-wrap: break-word;
         }
 
-        .response-btn:hover {
+        .option-btn:hover {
             background: var(--turquesa-oscuro);
             transform: scale(1.05);
         }
 
-        .response-btn:active {
+        .option-btn:active {
             transform: scale(0.95);
         }
 
@@ -341,8 +344,8 @@
                 font-size: 24px;
             }
             
-            .response-buttons {
-                max-width: 100%;
+            .options-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -434,17 +437,19 @@
     <script>
         const BOT_API_URL = 'https://wuau-bot.onrender.com';
 
-        // Detectar opciones numeradas en el texto
+        // Detectar opciones numeradas y crear botones
         function extractOptions(text) {
             const options = [];
             const lines = text.split('\n');
             
             for (const line of lines) {
-                // Buscar patrones como "1️⃣ Agendar cita" o "1. Agendar cita"
-                const match = line.match(/^[1-4]([️⃣ .])(.+)/);
+                // Buscar patrones: "1️⃣ Opción" o "1. Opción" o "1 Opción"
+                const match = line.match(/^[1-9]([️⃣ .:\-])\s*(.+?)(?:\s*\([^)]*\))?$/);
                 if (match) {
                     const optionText = match[2].trim();
-                    options.push(optionText);
+                    if (optionText && optionText.length > 0) {
+                        options.push(optionText);
+                    }
                 }
             }
             
@@ -484,7 +489,7 @@
                     // Detectar y crear botones para opciones
                     const options = extractOptions(data.response);
                     if (options.length > 0) {
-                        addButtonGroup(options);
+                        addOptionButtons(options);
                     }
                 } else {
                     removeTypingIndicator();
@@ -521,24 +526,32 @@
             messagesContainer.parentElement.scrollTop = messagesContainer.parentElement.scrollHeight;
         }
 
-        function addButtonGroup(options) {
+        function addOptionButtons(options) {
             const messagesContainer = document.getElementById('messagesContainer');
-            const buttonDiv = document.createElement('div');
-            buttonDiv.className = 'message bot-message';
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'message bot-message';
 
-            const buttonGroup = document.createElement('div');
-            buttonGroup.className = 'response-buttons';
+            const optionsContainer = document.createElement('div');
+            optionsContainer.className = 'response-options';
+
+            // Calcular cuántas columnas usar
+            const columns = options.length <= 3 ? 1 : 2;
+            const grid = document.createElement('div');
+            grid.className = 'options-grid';
+            if (columns === 1) grid.style.gridTemplateColumns = '1fr';
 
             options.forEach(option => {
                 const btn = document.createElement('button');
-                btn.className = 'response-btn';
+                btn.className = 'option-btn';
                 btn.textContent = option;
                 btn.onclick = () => sendMessage(option);
-                buttonGroup.appendChild(btn);
+                grid.appendChild(btn);
             });
 
-            buttonDiv.appendChild(buttonGroup);
-            messagesContainer.appendChild(buttonDiv);
+            optionsContainer.appendChild(grid);
+            optionsDiv.appendChild(optionsContainer);
+            messagesContainer.appendChild(optionsDiv);
+
             messagesContainer.parentElement.scrollTop = messagesContainer.parentElement.scrollHeight;
         }
 
