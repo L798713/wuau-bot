@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐕🐱 WUAU PET SPA - Grooming para Perros y Gatos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --turquesa: #20B2AA;
+            --turquesa-oscuro: #1a8a82;
+            --gris-oscuro: #2c3e50;
+            --gris-claro: #f8f9fa;
+            --blanco: #ffffff;
+            --gris-texto: #555555;
+            --sombra: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --sombra-fuerte: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--gris-claro) 0%, #f0f8f8 100%);
+            color: var(--gris-texto);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, var(--turquesa) 0%, var(--turquesa-oscuro) 100%);
+            color: var(--blanco);
+            padding: 20px 15px;
+            text-align: center;
+            box-shadow: var(--sombra-fuerte);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: float 20s linear infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-header {
+            font-size: 40px;
+            margin-bottom: 8px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+        }
+
+        .header-subtitle {
+            font-size: 12px;
+            opacity: 0.95;
+            font-weight: 300;
+            letter-spacing: 0.3px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        /* MAIN CONTENT */
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* WELCOME MESSAGE */
+        .welcome-section {
+            background: var(--blanco);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--sombra);
+            border-left: 4px solid var(--turquesa);
+        }
+
+        .welcome-message {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .animal-icon {
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+
+        .welcome-text h2 {
+            color: var(--turquesa-oscuro);
+            font-size: 18px;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .welcome-text p {
+            font-size: 13px;
+            color: var(--gris-texto);
+            line-height: 1.5;
+        }
+
+        /* MENU BUTTONS */
+        .menu-section {
+            margin-bottom: 20px;
+        }
+
+        .menu-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--turquesa);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            padding-left: 5px;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .menu-btn {
+            background: var(--blanco);
+            border: 2px solid var(--turquesa);
+            color: var(--turquesa);
+            padding: 14px 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            box-shadow: var(--sombra);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .menu-btn:hover {
+            background: var(--turquesa);
+            color: var(--blanco);
+            transform: translateY(-2px);
+            box-shadow: var(--sombra-fuerte);
+        }
+
+        .menu-btn:active {
+            transform: translateY(0);
+        }
+
+        .menu-icon {
+            font-size: 24px;
+        }
+
+        .menu-btn-text {
+            font-size: 12px;
+        }
+
+        /* CHAT AREA */
+        .chat-container {
+            flex: 1;
+            background: var(--blanco);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            overflow-y: auto;
+            box-shadow: var(--sombra);
+            display: flex;
+            flex-direction: column;
+            max-height: 400px;
+        }
+
+        .messages {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .bot-message {
+            justify-content: flex-start;
+        }
+
+        .user-message {
+            justify-content: flex-end;
+        }
+
+        .message-avatar {
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        .message-bubble {
+            max-width: 80%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            font-size: 13px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .bot-message .message-bubble {
+            background: #f0f0f0;
+            color: var(--gris-texto);
+            border-bottom-left-radius: 4px;
+        }
+
+        .user-message .message-bubble {
+            background: var(--turquesa);
+            color: var(--blanco);
+            border-bottom-right-radius: 4px;
+        }
+
+        /* INPUT AREA */
+        .input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        #messageInput:focus {
+            border-color: var(--turquesa);
+        }
+
+        #sendBtn {
+            background: var(--turquesa);
+            color: var(--blanco);
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: var(--sombra);
+        }
+
+        #sendBtn:hover {
+            background: var(--turquesa-oscuro);
+            transform: scale(1.05);
+        }
+
+        #sendBtn:active {
+            transform: scale(0.95);
+        }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            padding: 15px;
+            font-size: 11px;
+            color: #999;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .footer p {
+            margin: 3px 0;
+        }
+
+        .footer-link {
+            color: var(--turquesa);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .logo-header {
+                font-size: 36px;
+            }
+
+            .menu-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* LOADING */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #999;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% { opacity: 0.5; transform: translateY(0); }
+            30% { opacity: 1; transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo-header">🐕🐱</div>
+            <h1>WUAU PET SPA</h1>
+            <div class="header-subtitle">Grooming para Perros y Gatos</div>
+            <div class="status-badge">✅ En línea</div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="container">
+        <!-- WELCOME SECTION -->
+        <div class="welcome-section">
+            <div class="welcome-message">
+                <div class="animal-icon">🐕</div>
+                <div class="welcome-text">
+                    <h2>¡Hola! Bienvenido a WUAU PET SPA</h2>
+                    <p>Cuidamos a tu mascota con amor y profesionalismo</p>
+                </div>
+            </div>
+            <div class="welcome-message">
+                <div class="animal-icon">🐱</div>
+                <div class="welcome-text">
+                    <p><strong>Para Perros y Gatos</strong> - Servicios personalizados según el tamaño y tipo de pelaje</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- MENU SECTION -->
+        <div class="menu-section">
+            <div class="menu-title">¿Cómo puedo ayudarte?</div>
+            <div class="menu-grid">
+                <button class="menu-btn" onclick="sendMessage('Quiero agendar una cita')">
+                    <span class="menu-icon">📅</span>
+                    <span class="menu-btn-text">Agendar Cita</span>
+                </button>
+                <button class="menu-btn" onclick="sendMessage('Quiero ver los precios')">
+                    <span class="menu-icon">💰</span>
+                    <span class="menu-btn-text">Ver Precios</span>
+                </button>
+                <button class="menu-btn" onclick="sendMessage('¿Cuáles son sus horarios?')">
+                    <span class="menu-icon">🕐</span>
+                    <span class="menu-btn-text">Horarios</span>
+                </button>
+                <button class="menu-btn" onclick="sendMessage('Información')">
+                    <span class="menu-icon">ℹ️</span>
+                    <span class="menu-btn-text">Información</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- CHAT CONTAINER -->
+        <div class="chat-container">
+            <div class="messages" id="messagesContainer">
+                <div class="message bot-message">
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-bubble">
+                        ¡Hola! 👋 Soy tu asistente de WUAU PET SPA. ¿En qué puedo ayudarte hoy con tu 🐕 o 🐱?
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- INPUT AREA -->
+        <div class="input-container">
+            <input 
+                type="text" 
+                id="messageInput" 
+                placeholder="Escribe tu mensaje..." 
+                onkeypress="if(event.key==='Enter') sendMessage()"
+            >
+            <button id="sendBtn" onclick="sendMessage()">
+                ➤
+            </button>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <p>🐕🐱 WUAU PET SPA - Grooming Profesional</p>
+        <p>Para Perros y Gatos</p>
+        <p>☎️ <a href="tel:2677029312" class="footer-link">2677029312</a></p>
+    </div>
+
+    <script>
+        // Configuración
+        const BOT_API_URL = 'https://wuau-bot.onrender.com';
+
+        // Enviar mensaje
+        async function sendMessage(text = null) {
+            const input = document.getElementById('messageInput');
+            const message = text || input.value.trim();
+
+            if (!message) return;
+
+            // Limpiar input
+            input.value = '';
+
+            // Agregar mensaje del usuario
+            addMessage(message, 'user');
+
+            // Mostrar typing indicator
+            showTypingIndicator();
+
+            try {
+                // Enviar al bot
+                const response = await fetch(`${BOT_API_URL}/webhook`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        data: {
+                            message: message,
+                            sender: '1234567890'
+                        }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    removeTypingIndicator();
+                    addMessage(data.response, 'bot');
+                } else {
+                    removeTypingIndicator();
+                    addMessage('Disculpa, hubo un error. Por favor intenta de nuevo.', 'bot');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                removeTypingIndicator();
+                addMessage('No pude conectar con el servidor. Intenta más tarde.', 'bot');
+            }
+        }
+
+        // Agregar mensaje al chat
+        function addMessage(text, sender) {
+            const messagesContainer = document.getElementById('messagesContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = sender === 'bot' ? '🐕🐱' : '👤';
+
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.textContent = text;
+
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(bubble);
+            messagesContainer.appendChild(messageDiv);
+
+            // Auto scroll
+            messagesContainer.parentElement.scrollTop = messagesContainer.parentElement.scrollHeight;
+        }
+
+        // Typing indicator
+        function showTypingIndicator() {
+            const messagesContainer = document.getElementById('messagesContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot-message';
+            messageDiv.id = 'typingIndicator';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = '🐕🐱';
+
+            const indicator = document.createElement('div');
+            indicator.className = 'typing-indicator';
+            indicator.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(indicator);
+            messagesContainer.appendChild(messageDiv);
+
+            messagesContainer.parentElement.scrollTop = messagesContainer.parentElement.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+        }
+
+        // Focus en input al cargar
+        window.addEventListener('load', () => {
+            document.getElementById('messageInput').focus();
+        });
+    </script>
+</body>
+</html>
