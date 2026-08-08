@@ -144,7 +144,6 @@
             flex-direction: column;
             align-items: center;
             gap: 6px;
-            border: none;
         }
 
         .menu-btn:hover {
@@ -186,6 +185,7 @@
             display: flex;
             gap: 8px;
             animation: slideIn 0.3s ease;
+            flex-direction: column;
         }
 
         @keyframes slideIn {
@@ -200,11 +200,17 @@
         }
 
         .bot-message {
-            justify-content: flex-start;
+            align-items: flex-start;
         }
 
         .user-message {
-            justify-content: flex-end;
+            align-items: flex-end;
+        }
+
+        .message-header {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
         }
 
         .message-avatar {
@@ -233,15 +239,16 @@
             border-bottom-right-radius: 4px;
         }
 
-        /* BOTONES EN CHAT */
-        .button-group {
+        /* BOTONES EN RESPUESTAS */
+        .response-buttons {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
             margin-top: 10px;
+            max-width: 80%;
         }
 
-        .chat-btn {
+        .response-btn {
             background: var(--turquesa);
             color: var(--blanco);
             border: none;
@@ -251,14 +258,15 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
+            text-align: center;
         }
 
-        .chat-btn:hover {
+        .response-btn:hover {
             background: var(--turquesa-oscuro);
             transform: scale(1.05);
         }
 
-        .chat-btn:active {
+        .response-btn:active {
             transform: scale(0.95);
         }
 
@@ -328,10 +336,13 @@
             font-weight: 600;
         }
 
-        /* RESPONSIVE */
         @media (max-width: 480px) {
             .header h1 {
                 font-size: 24px;
+            }
+            
+            .response-buttons {
+                max-width: 100%;
             }
         }
     </style>
@@ -391,9 +402,11 @@
         <div class="chat-container">
             <div class="messages" id="messagesContainer">
                 <div class="message bot-message">
-                    <div class="message-avatar">🤖</div>
-                    <div class="message-bubble">
-                        ¡Hola! 👋 Soy tu asistente de WUAU PET SPA. Pulsa los botones de arriba o escribe tu pregunta. 🐕🐱
+                    <div class="message-header">
+                        <div class="message-avatar">🤖</div>
+                        <div class="message-bubble">
+                            ¡Hola! 👋 Soy tu asistente de WUAU PET SPA. Pulsa los botones de arriba o escribe tu pregunta. 🐕🐱
+                        </div>
                     </div>
                 </div>
             </div>
@@ -420,6 +433,23 @@
 
     <script>
         const BOT_API_URL = 'https://wuau-bot.onrender.com';
+
+        // Detectar opciones numeradas en el texto
+        function extractOptions(text) {
+            const options = [];
+            const lines = text.split('\n');
+            
+            for (const line of lines) {
+                // Buscar patrones como "1️⃣ Agendar cita" o "1. Agendar cita"
+                const match = line.match(/^[1-4]([️⃣ .])(.+)/);
+                if (match) {
+                    const optionText = match[2].trim();
+                    options.push(optionText);
+                }
+            }
+            
+            return options;
+        }
 
         async function sendMessage(text = null) {
             const input = document.getElementById('messageInput');
@@ -450,6 +480,12 @@
                 if (data.success) {
                     removeTypingIndicator();
                     addMessage(data.response, 'bot');
+                    
+                    // Detectar y crear botones para opciones
+                    const options = extractOptions(data.response);
+                    if (options.length > 0) {
+                        addButtonGroup(options);
+                    }
                 } else {
                     removeTypingIndicator();
                     addMessage('Disculpa, hubo un error. Por favor intenta de nuevo.', 'bot');
@@ -466,6 +502,9 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}-message`;
 
+            const header = document.createElement('div');
+            header.className = 'message-header';
+
             const avatar = document.createElement('div');
             avatar.className = 'message-avatar';
             avatar.textContent = sender === 'bot' ? '🐕🐱' : '👤';
@@ -474,10 +513,32 @@
             bubble.className = 'message-bubble';
             bubble.textContent = text;
 
-            messageDiv.appendChild(avatar);
-            messageDiv.appendChild(bubble);
+            header.appendChild(avatar);
+            header.appendChild(bubble);
+            messageDiv.appendChild(header);
             messagesContainer.appendChild(messageDiv);
 
+            messagesContainer.parentElement.scrollTop = messagesContainer.parentElement.scrollHeight;
+        }
+
+        function addButtonGroup(options) {
+            const messagesContainer = document.getElementById('messagesContainer');
+            const buttonDiv = document.createElement('div');
+            buttonDiv.className = 'message bot-message';
+
+            const buttonGroup = document.createElement('div');
+            buttonGroup.className = 'response-buttons';
+
+            options.forEach(option => {
+                const btn = document.createElement('button');
+                btn.className = 'response-btn';
+                btn.textContent = option;
+                btn.onclick = () => sendMessage(option);
+                buttonGroup.appendChild(btn);
+            });
+
+            buttonDiv.appendChild(buttonGroup);
+            messagesContainer.appendChild(buttonDiv);
             messagesContainer.parentElement.scrollTop = messagesContainer.parentElement.scrollHeight;
         }
 
@@ -487,6 +548,9 @@
             messageDiv.className = 'message bot-message';
             messageDiv.id = 'typingIndicator';
 
+            const header = document.createElement('div');
+            header.className = 'message-header';
+
             const avatar = document.createElement('div');
             avatar.className = 'message-avatar';
             avatar.textContent = '🐕🐱';
@@ -495,8 +559,9 @@
             bubble.className = 'message-bubble';
             bubble.innerHTML = '<div style="display: flex; gap: 4px;"><span style="animation: blink 1.4s infinite;">●</span><span style="animation: blink 1.4s infinite 0.2s;">●</span><span style="animation: blink 1.4s infinite 0.4s;">●</span></div>';
 
-            messageDiv.appendChild(avatar);
-            messageDiv.appendChild(bubble);
+            header.appendChild(avatar);
+            header.appendChild(bubble);
+            messageDiv.appendChild(header);
             messagesContainer.appendChild(messageDiv);
 
             messagesContainer.parentElement.scrollTop = messagesContainer.parentElement.scrollHeight;
