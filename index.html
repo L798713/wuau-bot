@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🐕🐱 WUAU PET SPA - Grooming para Perros y Gatos</title>
+    <title>🐕🐱 WUAU PET SPA - Grooming Profesional</title>
     <style>
         * {
             margin: 0;
@@ -38,49 +38,18 @@
             padding: 20px 15px;
             text-align: center;
             box-shadow: var(--sombra-fuerte);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: float 20s linear infinite;
-        }
-
-        @keyframes float {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(50px, 50px); }
-        }
-
-        .header-content {
-            position: relative;
-            z-index: 1;
-        }
-
-        .logo-header {
-            font-size: 40px;
-            margin-bottom: 8px;
         }
 
         .header h1 {
             font-size: 28px;
             font-weight: 700;
-            margin-bottom: 5px;
-            letter-spacing: 0.5px;
+            margin-bottom: 8px;
         }
 
         .header-subtitle {
             font-size: 12px;
             opacity: 0.95;
-            font-weight: 300;
-            letter-spacing: 0.3px;
+            margin-bottom: 8px;
         }
 
         .status-badge {
@@ -89,11 +58,10 @@
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 11px;
-            margin-top: 8px;
             font-weight: 500;
         }
 
-        /* MAIN CONTENT */
+        /* CONTAINER */
         .container {
             flex: 1;
             display: flex;
@@ -104,12 +72,12 @@
             width: 100%;
         }
 
-        /* WELCOME MESSAGE */
+        /* WELCOME */
         .welcome-section {
             background: var(--blanco);
             border-radius: 12px;
             padding: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             box-shadow: var(--sombra);
             border-left: 4px solid var(--turquesa);
         }
@@ -118,7 +86,7 @@
             display: flex;
             gap: 12px;
             align-items: flex-start;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         .animal-icon {
@@ -129,7 +97,7 @@
         .welcome-text h2 {
             color: var(--turquesa-oscuro);
             font-size: 18px;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             font-weight: 600;
         }
 
@@ -141,7 +109,7 @@
 
         /* MENU BUTTONS */
         .menu-section {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .menu-title {
@@ -158,7 +126,6 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
-            margin-bottom: 15px;
         }
 
         .menu-btn {
@@ -167,7 +134,7 @@
             color: var(--turquesa);
             padding: 14px 12px;
             border-radius: 10px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -177,6 +144,7 @@
             flex-direction: column;
             align-items: center;
             gap: 6px;
+            border: none;
         }
 
         .menu-btn:hover {
@@ -194,11 +162,7 @@
             font-size: 24px;
         }
 
-        .menu-btn-text {
-            font-size: 12px;
-        }
-
-        /* CHAT AREA */
+        /* CHAT */
         .chat-container {
             flex: 1;
             background: var(--blanco);
@@ -221,7 +185,6 @@
         .message {
             display: flex;
             gap: 8px;
-            margin-bottom: 8px;
             animation: slideIn 0.3s ease;
         }
 
@@ -270,7 +233,36 @@
             border-bottom-right-radius: 4px;
         }
 
-        /* INPUT AREA */
+        /* BOTONES EN CHAT */
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .chat-btn {
+            background: var(--turquesa);
+            color: var(--blanco);
+            border: none;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .chat-btn:hover {
+            background: var(--turquesa-oscuro);
+            transform: scale(1.05);
+        }
+
+        .chat-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* INPUT */
         .input-container {
             display: flex;
             gap: 10px;
@@ -341,122 +333,81 @@
             .header h1 {
                 font-size: 24px;
             }
-
-            .logo-header {
-                font-size: 36px;
-            }
-
-            .menu-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
-        /* LOADING */
-        .typing-indicator {
-            display: flex;
-            gap: 4px;
-            align-items: center;
-            padding: 10px;
-        }
-
-        .typing-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #999;
-            animation: typing 1.4s infinite;
-        }
-
-        .typing-dot:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .typing-dot:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-
-        @keyframes typing {
-            0%, 60%, 100% { opacity: 0.5; transform: translateY(0); }
-            30% { opacity: 1; transform: translateY(-10px); }
         }
     </style>
 </head>
 <body>
     <!-- HEADER -->
     <div class="header">
-        <div class="header-content">
-            <div class="logo-header">🐕🐱</div>
-            <h1>WUAU PET SPA</h1>
-            <div class="header-subtitle">Grooming para Perros y Gatos</div>
-            <div class="status-badge">✅ En línea</div>
-        </div>
+        <div style="font-size: 32px; margin-bottom: 8px;">🐕🐱</div>
+        <h1>WUAU PET SPA</h1>
+        <div class="header-subtitle">Grooming para Perros y Gatos</div>
+        <div class="status-badge">✅ En línea</div>
     </div>
 
-    <!-- MAIN CONTAINER -->
+    <!-- CONTAINER -->
     <div class="container">
-        <!-- WELCOME SECTION -->
+        <!-- WELCOME -->
         <div class="welcome-section">
             <div class="welcome-message">
                 <div class="animal-icon">🐕</div>
                 <div class="welcome-text">
-                    <h2>¡Hola! Bienvenido a WUAU PET SPA</h2>
-                    <p>Cuidamos a tu mascota con amor y profesionalismo</p>
+                    <h2>¡Hola! Bienvenido</h2>
+                    <p>Cuidamos a tu mascota con profesionalismo</p>
                 </div>
             </div>
             <div class="welcome-message">
                 <div class="animal-icon">🐱</div>
                 <div class="welcome-text">
-                    <p><strong>Para Perros y Gatos</strong> - Servicios personalizados según el tamaño y tipo de pelaje</p>
+                    <p><strong>Para Perros y Gatos</strong> - Servicios personalizados</p>
                 </div>
             </div>
         </div>
 
-        <!-- MENU SECTION -->
+        <!-- QUICK MENU -->
         <div class="menu-section">
             <div class="menu-title">¿Cómo puedo ayudarte?</div>
             <div class="menu-grid">
                 <button class="menu-btn" onclick="sendMessage('Quiero agendar una cita')">
                     <span class="menu-icon">📅</span>
-                    <span class="menu-btn-text">Agendar Cita</span>
+                    <span>Agendar Cita</span>
                 </button>
                 <button class="menu-btn" onclick="sendMessage('Quiero ver los precios')">
                     <span class="menu-icon">💰</span>
-                    <span class="menu-btn-text">Ver Precios</span>
+                    <span>Ver Precios</span>
                 </button>
                 <button class="menu-btn" onclick="sendMessage('¿Cuáles son sus horarios?')">
                     <span class="menu-icon">🕐</span>
-                    <span class="menu-btn-text">Horarios</span>
+                    <span>Horarios</span>
                 </button>
                 <button class="menu-btn" onclick="sendMessage('Información')">
                     <span class="menu-icon">ℹ️</span>
-                    <span class="menu-btn-text">Información</span>
+                    <span>Información</span>
                 </button>
             </div>
         </div>
 
-        <!-- CHAT CONTAINER -->
+        <!-- CHAT -->
         <div class="chat-container">
             <div class="messages" id="messagesContainer">
                 <div class="message bot-message">
                     <div class="message-avatar">🤖</div>
                     <div class="message-bubble">
-                        ¡Hola! 👋 Soy tu asistente de WUAU PET SPA. ¿En qué puedo ayudarte hoy con tu 🐕 o 🐱?
+                        ¡Hola! 👋 Soy tu asistente de WUAU PET SPA. Pulsa los botones de arriba o escribe tu pregunta. 🐕🐱
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- INPUT AREA -->
+        <!-- INPUT -->
         <div class="input-container">
             <input 
                 type="text" 
                 id="messageInput" 
-                placeholder="Escribe tu mensaje..." 
+                placeholder="O escribe aquí..." 
                 onkeypress="if(event.key==='Enter') sendMessage()"
             >
-            <button id="sendBtn" onclick="sendMessage()">
-                ➤
-            </button>
+            <button id="sendBtn" onclick="sendMessage()">➤</button>
         </div>
     </div>
 
@@ -468,27 +419,19 @@
     </div>
 
     <script>
-        // Configuración
         const BOT_API_URL = 'https://wuau-bot.onrender.com';
 
-        // Enviar mensaje
         async function sendMessage(text = null) {
             const input = document.getElementById('messageInput');
             const message = text || input.value.trim();
 
             if (!message) return;
 
-            // Limpiar input
             input.value = '';
-
-            // Agregar mensaje del usuario
             addMessage(message, 'user');
-
-            // Mostrar typing indicator
             showTypingIndicator();
 
             try {
-                // Enviar al bot
                 const response = await fetch(`${BOT_API_URL}/webhook`, {
                     method: 'POST',
                     headers: {
@@ -514,11 +457,10 @@
             } catch (error) {
                 console.error('Error:', error);
                 removeTypingIndicator();
-                addMessage('No pude conectar con el servidor. Intenta más tarde.', 'bot');
+                addMessage('No pude conectar. Intenta más tarde.', 'bot');
             }
         }
 
-        // Agregar mensaje al chat
         function addMessage(text, sender) {
             const messagesContainer = document.getElementById('messagesContainer');
             const messageDiv = document.createElement('div');
@@ -536,11 +478,9 @@
             messageDiv.appendChild(bubble);
             messagesContainer.appendChild(messageDiv);
 
-            // Auto scroll
             messagesContainer.parentElement.scrollTop = messagesContainer.parentElement.scrollHeight;
         }
 
-        // Typing indicator
         function showTypingIndicator() {
             const messagesContainer = document.getElementById('messagesContainer');
             const messageDiv = document.createElement('div');
@@ -551,12 +491,12 @@
             avatar.className = 'message-avatar';
             avatar.textContent = '🐕🐱';
 
-            const indicator = document.createElement('div');
-            indicator.className = 'typing-indicator';
-            indicator.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.innerHTML = '<div style="display: flex; gap: 4px;"><span style="animation: blink 1.4s infinite;">●</span><span style="animation: blink 1.4s infinite 0.2s;">●</span><span style="animation: blink 1.4s infinite 0.4s;">●</span></div>';
 
             messageDiv.appendChild(avatar);
-            messageDiv.appendChild(indicator);
+            messageDiv.appendChild(bubble);
             messagesContainer.appendChild(messageDiv);
 
             messagesContainer.parentElement.scrollTop = messagesContainer.parentElement.scrollHeight;
@@ -567,10 +507,16 @@
             if (indicator) indicator.remove();
         }
 
-        // Focus en input al cargar
         window.addEventListener('load', () => {
             document.getElementById('messageInput').focus();
         });
     </script>
+    
+    <style>
+        @keyframes blink {
+            0%, 60%, 100% { opacity: 0.5; }
+            30% { opacity: 1; }
+        }
+    </style>
 </body>
 </html>
