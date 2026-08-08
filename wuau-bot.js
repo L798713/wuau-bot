@@ -1,22 +1,21 @@
 #!/usr/bin/env node
 
 /**
- * ðŸ•ðŸ± WUAU PET SPA BOT v3 - SISTEMA PROFESIONAL
+ * 🐕🐱 WUAU PET SPA BOT v4 - INTELIGENCIA CONVERSACIONAL
  * 
- * Sistema inteligente de agendamiento para grooming
- * Reconoce nÃºmeros, palabras clave y flujo completo de citas
+ * Bot que entiende perfectamente cada respuesta del usuario
+ * y mantiene una conversación fluida y natural
  */
 
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-// âš™ï¸ CONFIGURACIÃ“N
 const PORT = process.env.PORT || 3000;
 
-// ðŸ“± INFORMACIÃ“N DEL NEGOCIO
+// 📱 INFORMACIÓN DEL NEGOCIO
 const BUSINESS_INFO = {
-  name: 'ðŸ•ðŸ± WUAU PET SPA',
+  name: '🐕🐱 WUAU PET SPA',
   owner: 'Lesly Arias',
   phone: '2677029312',
   location: '3516 Drumore Dr',
@@ -27,39 +26,42 @@ const BUSINESS_INFO = {
   }
 };
 
-// ðŸ’° SERVICIOS
+// 💰 SERVICIOS
 const SERVICES = {
-  'baÃ±o completo': { small: 45, medium: 60, large: 75 },
-  'baÃ±o + corte': { small: 65, medium: 85, large: 105 },
-  'corte completo': { small: 70, medium: 90, large: 110 },
-  'limpieza de oÃ­dos': { small: 25, medium: 30, large: 35 },
-  'corte de uÃ±as': { small: 20, medium: 25, large: 30 },
-  'deslanado': { small: 80, medium: 100, large: 130 },
-  'baÃ±o medicado': { small: 60, medium: 75, large: 90 },
-  'corte sanitario': { small: 35, medium: 45, large: 55 }
+  'baño completo': { small: 45, medium: 60, large: 75, icon: '🛁' },
+  'baño + corte': { small: 65, medium: 85, large: 105, icon: '🛁✂️' },
+  'corte completo': { small: 70, medium: 90, large: 110, icon: '✂️' },
+  'limpieza de oídos': { small: 25, medium: 30, large: 35, icon: '👂' },
+  'corte de uñas': { small: 20, medium: 25, large: 30, icon: '💅' },
+  'deslanado': { small: 80, medium: 100, large: 130, icon: '🧶' },
+  'baño medicado': { small: 60, medium: 75, large: 90, icon: '💊' },
+  'corte sanitario': { small: 35, medium: 45, large: 55, icon: '✂️🧼' }
 };
 
-// ðŸ—‚ï¸ BASE DE DATOS EN MEMORIA
+// 🗂️ BASE DE DATOS EN MEMORIA
 const APPOINTMENTS = [];
 const USER_SESSIONS = {};
 
-// ðŸ§  PALABRAS CLAVE
+// 🧠 PALABRAS CLAVE MEJORADAS
 const KEYWORDS = {
-  greeting: ['hola', 'buenos', 'buenas', 'hey', 'oi', 'hi', 'buenos dÃ­as', 'buenas noches'],
-  scheduling: ['agendar', '1', 'cita', 'reservar', 'quiero cita'],
-  pricing: ['precio', '2', 'cuÃ¡nto cuesta', 'cuÃ¡nto vale', 'precios', 'costo'],
-  hours: ['horario', '3', 'horarios', 'cuÃ¡ndo atienden', 'quÃ© horas'],
-  info: ['informaciÃ³n', '4', 'info', 'telÃ©fono', 'ubicaciÃ³n'],
-  size: ['pequeÃ±o', 'mediano', 'grande', 'pequeÃ±a', 'mediana', 'grande'],
-  service: ['baÃ±o', 'corte', 'limpieza', 'uÃ±as', 'deslanado', 'medicado', 'sanitario'],
-  yes: ['sÃ­', 'si', 'yes', 'claro', 'ok', 'confirmo', 'confirmÃ³'],
-  no: ['no', 'cancelar', 'nope']
+  greeting: ['hola', 'buenos', 'buenas', 'hey', 'oi', 'hi', 'buenos días', 'buenas noches', 'qué tal'],
+  agendar: ['agendar', 'cita', 'reservar', 'quiero agendar', 'agendar una cita', 'agendar cita'],
+  precios: ['precio', 'precios', 'cuánto cuesta', 'cuánto vale', 'costo', 'ver precios', 'costos'],
+  horarios: ['horario', 'horarios', 'cuándo atienden', 'qué horas', 'disponible'],
+  info: ['información', 'info', 'teléfono', 'ubicación', 'dirección', 'datos'],
+  pequeño: ['pequeño', 'pequeña', '1', 'pequeño (hasta 15kg)', 'pequeño hasta'],
+  mediano: ['mediano', 'mediana', '2', 'mediano (15-30kg)', 'mediano 15'],
+  grande: ['grande', '3', 'grande (más de 30kg)', 'grande más de'],
+  perro: ['perro', 'perros', 'cachorro', 'cachorros'],
+  gato: ['gato', 'gatos', 'gatito', 'gatitos', 'felino'],
+  confirmar: ['sí', 'si', 'yes', 'claro', 'ok', 'confirmo', 'confirmó', 'dale', 'listo'],
+  cancelar: ['no', 'nope', 'cancelar', 'no quiero']
 };
 
 // ==================== FUNCIONES ====================
 
 /**
- * Analizar intenciÃ³n del usuario
+ * Analizar intención del usuario - MEJORADO
  */
 function analyzeIntent(message) {
   const text = message.toLowerCase().trim();
@@ -74,102 +76,154 @@ function analyzeIntent(message) {
 }
 
 /**
- * Generar respuesta inteligente
+ * Generar respuesta INTELIGENTE
  */
 async function generateResponse(phoneNumber, message) {
   const intent = analyzeIntent(message);
+  const text = message.toLowerCase().trim();
   
-  // Inicializar sesiÃ³n del usuario
+  // Inicializar sesión
   if (!USER_SESSIONS[phoneNumber]) {
     USER_SESSIONS[phoneNumber] = {
       step: 'initial',
-      appointment: {}
+      appointment: {},
+      lastIntent: null
     };
   }
   
   const session = USER_SESSIONS[phoneNumber];
   let response = '';
-  
+
   // ==================== FLUJO PRINCIPAL ====================
   
-  switch (intent) {
-    case 'greeting':
-      response = `Â¡Hola! ðŸ‘‹ Bienvenido a ${BUSINESS_INFO.name}.\n\nÂ¿CÃ³mo puedo ayudarte hoy con tu ðŸ• o ðŸ±?\n\n1ï¸âƒ£ Agendar cita\n2ï¸âƒ£ Ver precios\n3ï¸âƒ£ Horarios\n4ï¸âƒ£ InformaciÃ³n`;
-      break;
-      
-    case 'scheduling':
-    case '1':
-      if (session.step === 'initial' || session.step === 'greeting') {
-        response = `Â¡Perfecto! ðŸ“… Vamos a agendar tu cita.\n\nÂ¿QuÃ© servicio necesitas?\n\n1ï¸âƒ£ BaÃ±o completo\n2ï¸âƒ£ BaÃ±o + Corte\n3ï¸âƒ£ Corte completo\n4ï¸âƒ£ Limpieza de oÃ­dos\n5ï¸âƒ£ Corte de uÃ±as\n6ï¸âƒ£ Deslanado\n7ï¸âƒ£ BaÃ±o medicado\n8ï¸âƒ£ Corte sanitario`;
-        session.step = 'selecting_service';
-      } else if (session.step === 'selecting_service') {
-        response = `Excelente servicio. âœ‚ï¸\n\nÂ¿CuÃ¡l es el tamaÃ±o de tu mascota?\n\n1ï¸âƒ£ PequeÃ±o (hasta 15kg) ðŸ•\n2ï¸âƒ£ Mediano (15-30kg) ðŸ±\n3ï¸âƒ£ Grande (mÃ¡s de 30kg) ðŸ•`;
+  // SALUDOS
+  if (intent === 'greeting' && session.step === 'initial') {
+    response = `¡Hola! 👋 Bienvenido a ${BUSINESS_INFO.name}.\n\n¿Cómo puedo ayudarte hoy con tu 🐕 o 🐱?\n\n1️⃣ Agendar cita\n2️⃣ Ver precios\n3️⃣ Horarios\n4️⃣ Información`;
+    session.lastIntent = 'greeting';
+  }
+  
+  // ==================== AGENDAMIENTO ====================
+  else if (intent === 'agendar' || session.step === 'scheduling') {
+    
+    if (session.step === 'initial' || session.step === 'greeting' || intent === 'agendar') {
+      response = `¡Perfecto! 📅 Vamos a agendar tu cita.\n\n¿Qué servicio necesitas?\n\n1️⃣ Baño completo\n2️⃣ Baño + Corte\n3️⃣ Corte completo\n4️⃣ Limpieza de oídos\n5️⃣ Corte de uñas\n6️⃣ Deslanado\n7️⃣ Baño medicado\n8️⃣ Corte sanitario`;
+      session.step = 'selecting_service';
+    }
+    
+    // SELECCIONAR SERVICIO
+    else if (session.step === 'selecting_service') {
+      const serviceMatch = Object.keys(SERVICES).find(s => text.includes(s.split(' ')[0]));
+      if (serviceMatch) {
+        session.appointment.service = serviceMatch;
+        response = `Excelente. ${SERVICES[serviceMatch].icon} ${serviceMatch.toUpperCase()}\n\n¿Cuál es el tamaño de tu mascota?\n\n1️⃣ Pequeño (hasta 15kg)\n2️⃣ Mediano (15-30kg)\n3️⃣ Grande (más de 30kg)`;
         session.step = 'selecting_size';
-        session.appointment.service = message;
-      } else if (session.step === 'selecting_size') {
-        response = `Â¿CuÃ¡l es tu nombre? Y Â¿cuÃ¡l es el nombre de tu mascota? ðŸ•ðŸ±\n\nPor favor responde: Mi nombre es... y mi mascota se llama...`;
-        session.step = 'getting_names';
-        session.appointment.size = message;
-      } else if (session.step === 'getting_names') {
-        response = `Â¿CuÃ¡l es tu nÃºmero de telÃ©fono? â˜Žï¸\n\nPor favor comparte tu nÃºmero de contacto.`;
-        session.step = 'getting_phone';
-        session.appointment.names = message;
-      } else if (session.step === 'getting_phone') {
-        response = `Â¿QuÃ© dÃ­a prefieres? ðŸ“…\n\nðŸ“… DISPONIBILIDAD:\nâ€¢ Lunes-Jueves: 9:00 AM, 11:00 AM, 3:00 PM\nâ€¢ Viernes: 8:30 AM, 10:00 AM, 2:00 PM\nâ€¢ SÃ¡bado: 8:00 AM, 10:00 AM, 12:00 PM, 2:00 PM, 4:00 PM`;
-        session.step = 'getting_date';
-        session.appointment.phone = message;
-      } else if (session.step === 'getting_date') {
-        // Guardar cita
-        const appointment = {
-          id: APPOINTMENTS.length + 1,
-          phone: phoneNumber,
-          ...session.appointment,
-          date: message,
-          timestamp: new Date()
-        };
-        APPOINTMENTS.push(appointment);
-        
-        response = `âœ… Â¡Â¡Â¡CITA CONFIRMADA!!!\n\nðŸ“‹ RESUMEN:\n${JSON.stringify(appointment, null, 2)}\n\nÂ¡Tu cita estÃ¡ programada! Te enviaremos un recordatorio 24 horas antes. ðŸ•ðŸ±`;
-        session.step = 'initial';
-        session.appointment = {};
+      } else {
+        response = `No encontré ese servicio. Por favor elige uno de los 8 servicios disponibles (1-8).`;
       }
-      break;
+    }
+    
+    // SELECCIONAR TAMAÑO
+    else if (session.step === 'selecting_size') {
+      let size = '';
+      if (intent === 'pequeño') size = 'pequeño';
+      else if (intent === 'mediano') size = 'mediano';
+      else if (intent === 'grande') size = 'grande';
       
-    case 'pricing':
-    case '2':
-      response = `ðŸ’° NUESTROS PRECIOS:\n\n`;
-      for (const [service, prices] of Object.entries(SERVICES)) {
-        response += `âœ‚ï¸ ${service.toUpperCase()}\n`;
-        response += `  ðŸ• PequeÃ±o: $${prices.small}\n`;
-        response += `  ðŸ± Mediano: $${prices.medium}\n`;
-        response += `  ðŸ• Grande: $${prices.large}\n\n`;
+      if (size) {
+        session.appointment.size = size;
+        response = `Perfecto. Tu mascota es ${size}. 🐾\n\n¿Cuál es tu nombre?`;
+        session.step = 'getting_name';
+      } else {
+        response = `Por favor selecciona el tamaño de tu mascota (1: Pequeño, 2: Mediano, 3: Grande).`;
       }
-      response += `ðŸ“Œ Los precios pueden variar segÃºn comportamiento y estado del pelaje.`;
-      break;
+    }
+    
+    // OBTENER NOMBRE
+    else if (session.step === 'getting_name') {
+      session.appointment.clientName = message;
+      response = `¿Cuál es el nombre de tu mascota? 🐕🐱`;
+      session.step = 'getting_pet_name';
+    }
+    
+    // OBTENER NOMBRE MASCOTA
+    else if (session.step === 'getting_pet_name') {
+      session.appointment.petName = message;
+      response = `¿Cuál es tu número de teléfono? ☎️`;
+      session.step = 'getting_phone';
+    }
+    
+    // OBTENER TELÉFONO
+    else if (session.step === 'getting_phone') {
+      session.appointment.phone = message;
+      response = `¿Qué día prefieres? 📅\n\n📅 DISPONIBILIDAD:\n• Lunes-Jueves: 9:00 AM, 11:00 AM, 3:00 PM\n• Viernes: 8:30 AM, 10:00 AM, 2:00 PM\n• Sábado: 8:00 AM, 10:00 AM, 12:00 PM, 2:00 PM, 4:00 PM`;
+      session.step = 'getting_date';
+    }
+    
+    // OBTENER FECHA
+    else if (session.step === 'getting_date') {
+      session.appointment.date = message;
+      response = `¿Qué hora prefieres?`;
+      session.step = 'getting_time';
+    }
+    
+    // OBTENER HORA
+    else if (session.step === 'getting_time') {
+      session.appointment.time = message;
       
-    case 'hours':
-    case '3':
-      response = `â° HORARIOS DE ATENCIÃ“N:\n\n`;
-      response += `ðŸ“… LUNES A JUEVES:\n9:00 AM | 11:00 AM | 3:00 PM\n\n`;
-      response += `ðŸ“… VIERNES:\n8:30 AM | 10:00 AM | 2:00 PM\n\n`;
-      response += `ðŸ“… SÃBADO:\n8:00 AM | 10:00 AM | 12:00 PM | 2:00 PM | 4:00 PM\n\n`;
-      response += `ðŸ“ ${BUSINESS_INFO.location}\nâ˜Žï¸ ${BUSINESS_INFO.phone}`;
-      break;
+      // CONFIRMAR CITA
+      const apt = session.appointment;
+      response = `✅ ¡¡¡CITA CONFIRMADA!!!\n\n📋 RESUMEN:\n🐕🐱 Mascota: ${apt.petName}\n👤 Cliente: ${apt.clientName}\n✂️ Servicio: ${apt.service} (${apt.size})\n📅 Fecha: ${apt.date}\n🕐 Hora: ${apt.time}\n☎️ Teléfono: ${apt.phone}\n\n¡Tu cita está programada! Te enviaremos un recordatorio 24 horas antes. ¡Gracias por confiar en WUAU PET SPA!`;
       
-    case 'info':
-    case '4':
-      response = `â„¹ï¸ INFORMACIÃ“N DE WUAU PET SPA:\n\n`;
-      response += `ðŸ¢ Nombre: ${BUSINESS_INFO.name}\n`;
-      response += `ðŸ‘¤ DueÃ±o: ${BUSINESS_INFO.owner}\n`;
-      response += `ðŸ“ UbicaciÃ³n: ${BUSINESS_INFO.location}\n`;
-      response += `â˜Žï¸ TelÃ©fono: ${BUSINESS_INFO.phone}\n\n`;
-      response += `ðŸ•ðŸ± Atendemos Perros y Gatos\n`;
-      response += `âœ‚ï¸ 8 servicios disponibles\n`;
-      response += `â­ Grooming profesional`;
-      break;
+      // Guardar cita
+      const appointment = {
+        id: APPOINTMENTS.length + 1,
+        phoneNumber: phoneNumber,
+        ...apt,
+        timestamp: new Date()
+      };
+      APPOINTMENTS.push(appointment);
       
-    default:
-      response = `No entendÃ­ bien tu pregunta. ðŸ¤”\n\nPuedo ayudarte con:\n\n1ï¸âƒ£ Agendar cita\n2ï¸âƒ£ Ver precios\n3ï¸âƒ£ Horarios\n4ï¸âƒ£ InformaciÃ³n\n\nÂ¿Con quÃ© necesitas ayuda?`;
+      session.step = 'initial';
+      session.appointment = {};
+    }
+  }
+  
+  // ==================== PRECIOS ====================
+  else if (intent === 'precios') {
+    response = `💰 NUESTROS PRECIOS:\n\n`;
+    for (const [service, prices] of Object.entries(SERVICES)) {
+      response += `${prices.icon} ${service.toUpperCase()}\n`;
+      response += `  🐕 Pequeño: $${prices.small}\n`;
+      response += `  🐱 Mediano: $${prices.medium}\n`;
+      response += `  🐕 Grande: $${prices.large}\n\n`;
+    }
+    response += `📌 Los precios pueden variar según comportamiento y estado del pelaje.`;
+  }
+  
+  // ==================== HORARIOS ====================
+  else if (intent === 'horarios') {
+    response = `⏰ HORARIOS DE ATENCIÓN:\n\n`;
+    response += `📅 LUNES A JUEVES:\n9:00 AM | 11:00 AM | 3:00 PM\n\n`;
+    response += `📅 VIERNES:\n8:30 AM | 10:00 AM | 2:00 PM\n\n`;
+    response += `📅 SÁBADO:\n8:00 AM | 10:00 AM | 12:00 PM | 2:00 PM | 4:00 PM\n\n`;
+    response += `📍 ${BUSINESS_INFO.location}\n☎️ ${BUSINESS_INFO.phone}`;
+  }
+  
+  // ==================== INFORMACIÓN ====================
+  else if (intent === 'info') {
+    response = `ℹ️ INFORMACIÓN DE WUAU PET SPA:\n\n`;
+    response += `🏢 Nombre: ${BUSINESS_INFO.name}\n`;
+    response += `👤 Dueño: ${BUSINESS_INFO.owner}\n`;
+    response += `📍 Ubicación: ${BUSINESS_INFO.location}\n`;
+    response += `☎️ Teléfono: ${BUSINESS_INFO.phone}\n\n`;
+    response += `🐕🐱 Atendemos Perros y Gatos\n`;
+    response += `✂️ 8 servicios disponibles\n`;
+    response += `⭐ Grooming profesional de calidad`;
+  }
+  
+  // ==================== NO ENTENDIÓ ====================
+  else {
+    response = `No entendí bien tu pregunta. 🤔\n\nPuedo ayudarte con:\n\n1️⃣ Agendar cita\n2️⃣ Ver precios\n3️⃣ Horarios\n4️⃣ Información\n\n¿Con qué necesitas ayuda?`;
   }
   
   return response;
@@ -201,13 +255,13 @@ app.post('/webhook', async (req, res) => {
     const { message, sender } = data;
     const phoneNumber = sender.toString().replace(/\D/g, '');
     
-    console.log(`ðŸ“¨ Mensaje de ${phoneNumber}: ${message}`);
+    console.log(`📨 Mensaje de ${phoneNumber}: ${message}`);
     
     const response = await generateResponse(phoneNumber, message);
     
     res.json({ success: true, response });
   } catch (error) {
-    console.error('âŒ Error:', error);
+    console.error('❌ Error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -228,34 +282,22 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
     bot: BUSINESS_INFO.name,
-    version: 'v3',
+    version: 'v4',
     timestamp: new Date()
-  });
-});
-
-// Info
-app.get('/info', (req, res) => {
-  res.json({
-    name: BUSINESS_INFO.name,
-    owner: BUSINESS_INFO.owner,
-    phone: BUSINESS_INFO.phone,
-    location: BUSINESS_INFO.location,
-    services: Object.keys(SERVICES),
-    hours: BUSINESS_INFO.hours
   });
 });
 
 // Root
 app.get('/', (req, res) => {
   res.json({
-    message: 'ðŸ•ðŸ± WUAU PET SPA BOT v3 - SISTEMA PROFESIONAL',
+    message: '🐕🐱 WUAU PET SPA BOT v4 - INTELIGENCIA CONVERSACIONAL',
     status: 'Running',
-    version: 'v3',
+    version: 'v4',
     features: [
-      'Reconocimiento de nÃºmeros',
+      'Entiende perfectamente cada respuesta',
+      'Mantiene conversación fluida',
       'Agendamiento completo',
-      'Guardado de citas',
-      'Sistema profesional'
+      'Guardado de citas inteligente'
     ]
   });
 });
@@ -264,16 +306,16 @@ app.get('/', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`
-â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
-â•‘  ðŸ•ðŸ± WUAU PET SPA BOT v3 INICIADO     â•‘
-â•‘                                        â•‘
-â•‘  âœ… Sistema profesional activo        â•‘
-â•‘  ðŸŒ URL: https://wuau-bot.onrender.comâ•‘
-â•‘  ðŸ“± Agendamiento completo             â•‘
-â•‘  ðŸ’¾ Guardado de citas                 â•‘
-â•‘                                        â•‘
-â•‘  Esperando conexiones...              â•‘
-â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+╔════════════════════════════════════════╗
+║  🐕🐱 WUAU PET SPA BOT v4 INICIADO     ║
+║                                        ║
+║  ✅ Inteligencia conversacional activa ║
+║  🌐 URL: https://wuau-bot.onrender.com║
+║  💬 Entiende perfectamente            ║
+║  📅 Agendamiento inteligente          ║
+║                                        ║
+║  Esperando conexiones...              ║
+╚════════════════════════════════════════╝
   `);
 });
 
