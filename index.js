@@ -4,6 +4,7 @@
  * 🐕🐱 WUAU PET SPA BOT v9 - CON GOOGLE CALENDAR
  * Bot inteligente para agendamiento de citas con Google Calendar
  * Reconocimiento perfecto de tamaños + Disponibilidad en tiempo real
+ * FIX: Conversión correcta de horas 12h a 24h
  */
 
 const express = require('express');
@@ -65,6 +66,23 @@ const HORARIOS = {
 
 const SESIONES = {};
 
+// ============== FUNCIONES UTILIDAD ==============
+
+function convertirHora24h(horaString) {
+  // Convierte "9:00 AM" o "3:00 PM" a formato 24h "09:00"
+  const [tiempo, periodo] = horaString.split(' ');
+  const [horas, minutos] = tiempo.split(':').map(Number);
+  
+  let horasFinales = horas;
+  if (periodo === 'PM' && horas !== 12) {
+    horasFinales = horas + 12;
+  } else if (periodo === 'AM' && horas === 12) {
+    horasFinales = 0;
+  }
+  
+  return `${String(horasFinales).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`;
+}
+
 // ============== FUNCIONES GOOGLE CALENDAR ==============
 
 async function obtenerEventosDelDia(fecha) {
@@ -103,11 +121,12 @@ async function obtenerHorariosDisponibles(fecha, horariosDelDia) {
 async function crearEventoEnCalendar(datos) {
   try {
     const [mes, dia, año] = datos.fecha.split('/').map(Number);
-    const [horas, minutos] = datos.hora.split(':').map(Number);
+    const horaFormato24h = convertirHora24h(datos.hora);
+    const [horas, minutos] = horaFormato24h.split(':').map(Number);
     
     const fechaInicio = new Date(año, mes - 1, dia, horas, minutos);
     const fechaFin = new Date(fechaInicio);
-    fechaFin.setHours(fechaFin.getHours() + 1); // Duración: 1 hora
+    fechaFin.setHours(fechaFin.getHours() + 1);
 
     const evento = {
       summary: `${datos.mascota} - ${datos.servicio} (${datos.tamano})`,
@@ -303,7 +322,7 @@ app.get('/', (req, res) => {
     bot: '🐕🐱 WUAU PET SPA BOT v9',
     version: '9.0.0',
     status: 'LIVE con Google Calendar',
-    features: ['Agendamiento', 'Disponibilidad en tiempo real', 'Google Calendar', 'Reconocimiento perfecto']
+    features: ['Agendamiento', 'Disponibilidad en tiempo real', 'Google Calendar', 'Conversión de horas 12h→24h']
   });
 });
 
@@ -359,6 +378,7 @@ console.log(`
 ╔════════════════════════════════════════╗
 ║  🐕🐱 WUAU PET SPA BOT v9              ║
 ║  CON GOOGLE CALENDAR INTEGRATION       ║
+║  FIX: Conversión correcta de horas     ║
 ╚════════════════════════════════════════╝
 `);
 
@@ -366,5 +386,6 @@ app.listen(PORT, () => {
   console.log(`✅ Bot LIVE en puerto ${PORT}`);
   console.log(`📅 Google Calendar conectado`);
   console.log(`🔐 Credenciales de servicio cargadas`);
+  console.log(`🕐 Conversión de horas 12h→24h activa`);
   console.log(`Server listening on port ${PORT}`);
 });
