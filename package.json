@@ -2,10 +2,10 @@
   "name": "wuau-pet-spa-bot",
   "version": "1.0.0",
   "description": "Chatbot WhatsApp + App Web para WUAU PET SPA",
-  "main": "wuau-bot.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node wuau-bot.js",
-    "dev": "nodemon wuau-bot.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "dependencies": {
     "axios": "^1.4.0",
