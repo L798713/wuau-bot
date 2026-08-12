@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
 /**
- * 🐕🐱 WUAU PET SPA BOT v8 - DEFINITIVO
+ * 🐕🐱 WUAU PET SPA BOT - DEFINITIVO
  * 
- * - Formato profesional separado (NO párrafos largos)
- * - Memoria inteligente de conversación
- * - Información completa del negocio
- * - Reconocimiento PERFECTO de tamaños
+ * Archivo index.js para forzar recompilación en Render
+ * - Formato profesional separado
+ * - Memoria inteligente
+ * - Información completa
+ * - Reconocimiento PERFECTO
  */
 
 const express = require('express');
@@ -28,7 +29,7 @@ const NEGOCIO = {
   }
 };
 
-// 💰 SERVICIOS CON MÚLTIPLES NOMBRES
+// 💰 SERVICIOS
 const SERVICIOS = {
   'baño completo': { pequeno: 45, mediano: 60, grande: 75, icon: '🛁', nombres: ['baño', 'baño completo', 'bañar', 'bano'] },
   'baño + corte': { pequeno: 65, mediano: 85, grande: 105, icon: '🛁✂️', nombres: ['baño + corte', 'baño corte', 'bano corte', 'baño y corte'] },
@@ -114,13 +115,11 @@ async function generarRespuesta(telefono, mensaje) {
   // ==================== AGENDAMIENTO ====================
   else if (intencion === 'agendar' || sesion.paso.includes('agendar')) {
     
-    // PASO 1: SERVICIO
     if (sesion.paso === 'inicial' || intencion === 'agendar') {
       respuesta = `¡Perfecto! 📅\n\nVamos a agendar tu cita.\n\n¿Qué servicio necesitas?\n\n1️⃣ Baño completo\n2️⃣ Baño + Corte\n3️⃣ Corte completo\n4️⃣ Limpieza de oídos\n5️⃣ Corte de uñas\n6️⃣ Deslanado\n7️⃣ Baño medicado\n8️⃣ Corte sanitario`;
       sesion.paso = 'agendar_servicio';
     }
     
-    // PASO 2: PROCESAR SERVICIO
     else if (sesion.paso === 'agendar_servicio') {
       const servicio = buscarServicio(mensaje);
       if (servicio) {
@@ -132,7 +131,6 @@ async function generarRespuesta(telefono, mensaje) {
       }
     }
     
-    // PASO 3: PROCESAR TAMAÑO
     else if (sesion.paso === 'agendar_tamano') {
       const tamano = detectarTamano(mensaje);
       
@@ -145,35 +143,30 @@ async function generarRespuesta(telefono, mensaje) {
       }
     }
     
-    // PASO 4: NOMBRE CLIENTE
     else if (sesion.paso === 'agendar_nombre') {
       sesion.cita.cliente = mensaje;
       respuesta = `¿Cuál es el nombre de tu mascota? 🐕🐱`;
       sesion.paso = 'agendar_mascota';
     }
     
-    // PASO 5: NOMBRE MASCOTA
     else if (sesion.paso === 'agendar_mascota') {
       sesion.cita.mascota = mensaje;
       respuesta = `¿Cuál es tu número de teléfono? ☎️`;
       sesion.paso = 'agendar_telefono';
     }
     
-    // PASO 6: TELÉFONO
     else if (sesion.paso === 'agendar_telefono') {
       sesion.cita.telefono = mensaje;
       respuesta = `¿Qué día prefieres? 📅\n\n📅 DISPONIBILIDAD:\n\nLunes-Jueves\n• 9:00 AM\n• 11:00 AM\n• 3:00 PM\n\nViernes\n• 8:30 AM\n• 10:00 AM\n• 2:00 PM\n\nSábado\n• 8:00 AM\n• 10:00 AM\n• 12:00 PM\n• 2:00 PM\n• 4:00 PM`;
       sesion.paso = 'agendar_fecha';
     }
     
-    // PASO 7: FECHA
     else if (sesion.paso === 'agendar_fecha') {
       sesion.cita.fecha = mensaje;
       respuesta = `¿Qué hora prefieres?`;
       sesion.paso = 'agendar_hora';
     }
     
-    // PASO 8: HORA Y CONFIRMAR
     else if (sesion.paso === 'agendar_hora') {
       sesion.cita.hora = mensaje;
       
@@ -260,7 +253,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Webhook
 app.post('/webhook', async (req, res) => {
   try {
     const { data } = req.body;
@@ -281,7 +273,6 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-// Stats
 app.get('/stats', (req, res) => {
   res.json({
     negocio: NEGOCIO.nombre,
@@ -291,38 +282,33 @@ app.get('/stats', (req, res) => {
   });
 });
 
-// Health
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
     bot: NEGOCIO.nombre,
-    version: 'v8',
+    version: 'definitivo',
     timestamp: new Date()
   });
 });
 
-// Root
 app.get('/', (req, res) => {
   res.json({
-    message: '🐕🐱 WUAU PET SPA BOT v8 - DEFINITIVO',
-    status: 'Running',
-    version: 'v8'
+    message: '🐕🐱 WUAU PET SPA BOT - DEFINITIVO',
+    status: 'Running'
   });
 });
-
-// ==================== INICIO ====================
 
 app.listen(PORT, () => {
   console.log(`
 ╔════════════════════════════════════════╗
-║  🐕🐱 WUAU PET SPA BOT v8 INICIADO     ║
+║  🐕🐱 WUAU PET SPA BOT INICIADO        ║
 ║                                        ║
 ║  ✅ FORMATO PROFESIONAL SEPARADO      ║
 ║  🧠 MEMORIA INTELIGENTE               ║
 ║  ℹ️ INFORMACIÓN COMPLETA              ║
 ║  💬 RECONOCIMIENTO PERFECTO           ║
 ║                                        ║
-║  ¡¡¡SISTEMA DEFINITIVO LISTO!!!       ║
+║  ¡¡¡SISTEMA DEFINITIVO FUNCIONANDO!!! ║
 ╚════════════════════════════════════════╝
   `);
 });
