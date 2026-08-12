@@ -1,7 +1,7 @@
 {
   "name": "wuau-pet-spa-bot",
-  "version": "1.0.0",
-  "description": "Chatbot WhatsApp + App Web para WUAU PET SPA",
+  "version": "9.0.0",
+  "description": "Chatbot WhatsApp + App Web para WUAU PET SPA - Grooming profesional",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -13,6 +13,10 @@
     "express": "^4.18.2",
     "cors": "^2.8.5",
     "body-parser": "^1.20.2",
-    "moment": "^2.29.4"
+    "moment": "^2.29.4",
+    "googleapis": "^118.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   }
 }
