@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * 🐕🐱 WUAU PET SPA BOT v10 - SISTEMA AVANZADO POR RAZA
- * Bot inteligente con precios dinámicos por raza + servicio + tamaño
- * NUEVO: Detecta si es PERRO o GATO
+ * 🐕🐱 WUAU PET SPA BOT v10.2 - DISPONIBILIDAD INTELIGENTE
+ * Bloquea horarios automáticamente según duración del servicio
+ * Evita conflictos de citas
  */
 
 const express = require('express');
@@ -29,14 +29,6 @@ const auth = new google.auth.GoogleAuth({
 });
 
 const calendar = google.calendar({ version: 'v3', auth });
-
-const NEGOCIO = {
-  nombre: '🐕🐱 WUAU PET SPA',
-  dueno: 'Lesly Arias',
-  telefono: '2677029312',
-  ubicacion: '3516 Drumore Dr',
-  servicios: 'Perros Y Gatos'
-};
 
 const HORARIOS = {
   'lunes-jueves': ['9:00 AM', '11:00 AM', '3:00 PM'],
@@ -114,6 +106,8 @@ function normalizar(texto) {
     .replace(/[^a-z0-9\s]/g, '');
 }
 
+// ============== DISPONIBILIDAD INTELIGENTE ==============
+
 async function obtenerEventosDelDia(fecha) {
   try {
     const inicio = new Date(fecha);
@@ -134,6 +128,34 @@ async function obtenerEventosDelDia(fecha) {
   } catch (error) {
     console.error('Error obteniendo eventos:', error.message);
     return [];
+  }
+}
+
+async function verificarDisponibilidad(fecha, hora, tiempoServicio) {
+  try {
+    const eventos = await obtenerEventosDelDia(fecha);
+    const horaFormato24h = convertirHora24h(hora);
+    const [horaNum, minNum] = horaFormato24h.split(':').map(Number);
+    
+    const [mes, dia, año] = fecha.split('/').map(Number);
+    const horaInicio = new Date(año, mes - 1, dia, horaNum, minNum);
+    const horaFin = new Date(horaInicio);
+    horaFin.setMinutes(horaFin.getMinutes() + tiempoServicio);
+
+    for (const evento of eventos) {
+      const eventoInicio = new Date(evento.start.dateTime);
+      const eventoFin = new Date(evento.end.dateTime);
+
+      // Verificar si hay conflicto
+      if (!(horaFin <= eventoInicio || horaInicio >= eventoFin)) {
+        return false; // Hay conflicto
+      }
+    }
+
+    return true; // Está disponible
+  } catch (error) {
+    console.error('Error verificando disponibilidad:', error.message);
+    return true; // Por seguridad, permite si hay error
   }
 }
 
@@ -175,7 +197,6 @@ async function procesarMensaje(mensaje, senderId) {
 
   const sesion = SESIONES[senderId];
 
-  // PASO 0: Menú principal
   if (sesion.paso === 0) {
     if (['agendar', 'agendar cita', 'cita', 'reserva'].some(p => textoNorm.includes(p))) {
       sesion.paso = 1;
@@ -199,7 +220,6 @@ async function procesarMensaje(mensaje, senderId) {
     }
   }
 
-  // PASO 1: Tipo de mascota (Perro o Gato)
   if (sesion.paso === 1) {
     if (textoNorm.includes('perro') || textoNorm === '1') {
       sesion.tipo = 'Perro';
@@ -217,7 +237,6 @@ async function procesarMensaje(mensaje, senderId) {
     return { response: 'Por favor, elige: 1️⃣ Perro o 2️⃣ Gato' };
   }
 
-  // PASO 2: Seleccionar tamaño
   if (sesion.paso === 2) {
     const tamanioKeys = Object.keys(RAZAS_DATA);
     const tamanioEncontrado = tamanioKeys.find(key => textoNorm.includes(key) || textoNorm === String(tamanioKeys.indexOf(key) + 1));
@@ -237,7 +256,6 @@ async function procesarMensaje(mensaje, senderId) {
     return { response: 'Por favor, elige un tamaño: XS, S, M, L o XL' };
   }
 
-  // PASO 3: Seleccionar servicio
   if (sesion.paso === 3) {
     const serviciosDisponibles = Object.keys(RAZAS_DATA[sesion.tamanio].servicios);
     const servicioEncontrado = serviciosDisponibles.find(s => textoNorm.includes(normalizar(s)));
@@ -256,7 +274,6 @@ async function procesarMensaje(mensaje, senderId) {
     return { response: 'Por favor, elige un servicio.' };
   }
 
-  // PASO 4-10: Datos personales y fecha/hora (igual que antes)
   if (sesion.paso === 4) {
     sesion.cliente = mensaje;
     sesion.paso = 5;
@@ -304,6 +321,16 @@ async function procesarMensaje(mensaje, senderId) {
       sesion.raza = RAZAS_DATA[sesion.tamanio].nombre;
       sesion.paso = 9;
       
+      // ⭐ VERIFICAR DISPONIBILIDAD ANTES DE CONFIRMAR
+      const disponible = await verificarDisponibilidad(sesion.fecha, sesion.hora, sesion.tiempoServicio);
+      
+      if (!disponible) {
+        sesion.paso = 8; // Volver a paso de seleccionar hora
+        return {
+          response: `❌ Lo siento, esa hora no está disponible. El servicio dura ${sesion.tiempoServicio} minutos.\n\n¿Otra hora?\n\n${sesion.horariosDisponibles.map((h, i) => `${i + 1}️⃣ ${h}`).join('\n')}`
+        };
+      }
+      
       try {
         await crearEventoEnCalendar(sesion);
         
@@ -335,10 +362,10 @@ async function procesarMensaje(mensaje, senderId) {
 
 app.get('/', (req, res) => {
   res.json({
-    bot: '🐕🐱 WUAU PET SPA BOT v10',
-    version: '10.0.1',
-    status: 'LIVE - Detecta Perro o Gato',
-    features: ['Perro/Gato', 'Precios dinámicos', 'Tiempos', 'Google Calendar']
+    bot: '🐕🐱 WUAU PET SPA BOT v10.2',
+    version: '10.2.0',
+    status: 'LIVE - Disponibilidad Inteligente',
+    features: ['Perro/Gato', 'Precios dinámicos', 'Disponibilidad en tiempo real', 'Google Calendar']
   });
 });
 
@@ -371,13 +398,14 @@ app.post('/chat', async (req, res) => {
 
 console.log(`
 ╔════════════════════════════════════════╗
-║  🐕🐱 WUAU PET SPA BOT v10.1            ║
-║  PERRO o GATO + SISTEMA AVANZADO       ║
+║  🐕🐱 WUAU PET SPA BOT v10.2            ║
+║  DISPONIBILIDAD INTELIGENTE             ║
+║  Bloquea horarios automáticamente       ║
 ╚════════════════════════════════════════╝
 `);
 
 app.listen(PORT, () => {
   console.log(`✅ Bot LIVE en puerto ${PORT}`);
-  console.log(`🐕🐱 Detecta Perro o Gato`);
+  console.log(`🔒 Verificación de disponibilidad activa`);
   console.log(`📅 Google Calendar conectado`);
 });
