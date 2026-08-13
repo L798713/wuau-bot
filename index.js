@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * 🐕🐱 WUAU PET SPA BOT v10.3 - ZONA HORARIA CORREGIDA
- * Muestra horas correctas en Google Calendar
+ * 🐕🐱 WUAU PET SPA BOT v10.4 - DATOS REALES DE LESLY
+ * Tono amable, personal y genuino como Lesly se comunica
+ * Disponibilidad inteligente + Zona horaria correcta
  */
 
 const express = require('express');
@@ -17,7 +18,7 @@ app.use(bodyParser.json());
 
 const PORT = process.env.PORT || 3000;
 const CALENDAR_ID = '41b56c3adcdac185b06be6c47b85a130f083210e1555f6f3640b367f4044168c@group.calendar.google.com';
-const TIMEZONE = 'America/New_York'; // ⭐ ZONA HORARIA CORRECTA
+const TIMEZONE = 'America/New_York';
 
 const serviceAccount = process.env.GOOGLE_CREDENTIALS 
   ? JSON.parse(process.env.GOOGLE_CREDENTIALS)
@@ -36,52 +37,25 @@ const HORARIOS = {
   'sabado': ['8:00 AM', '10:00 AM', '12:00 PM', '2:00 PM', '4:00 PM']
 };
 
-const RAZAS_DATA = {
-  'xs': {
-    nombre: 'XS (Pequeño)',
-    ejemplos: ['Pincher', 'Chihuahua', 'Mestizo pequeño', 'Cachorro'],
-    servicios: {
-      'pelo corto': { precio: 45, tiempo: 45 },
-      'corte y cepillado': { precio: 55, tiempo: 60 },
-      'manto largo': { precio: 65, tiempo: 75 }
-    }
-  },
-  's': {
-    nombre: 'S (Pequeño-Mediano)',
-    ejemplos: ['Poodle', 'Shih Tzu', 'Yorkie', 'Pomerania', 'Boston Terrier', 'Mestizo'],
-    servicios: {
-      'pelo corto': { precio: 45, tiempo: 60 },
-      'corte y cepillado': { precio: 65, tiempo: 75 },
-      'manto largo': { precio: 75, tiempo: 90 }
-    }
-  },
-  'm': {
-    nombre: 'M (Mediano)',
-    ejemplos: ['Mestizo mediano', 'Beagle', 'Cocker Spaniel'],
-    servicios: {
-      'pelo corto': { precio: 45, tiempo: 75 },
-      'corte y cepillado': { precio: 65, tiempo: 90 },
-      'manto largo': { precio: 75, tiempo: 105 }
-    }
-  },
-  'l': {
-    nombre: 'L (Grande)',
-    ejemplos: ['Bulldog Inglés', 'Basset Hound', 'Boxer', 'Pitbull', 'Mestizo grande'],
-    servicios: {
-      'pelo corto': { precio: 65, tiempo: 90 },
-      'corte y cepillado': { precio: 75, tiempo: 105 },
-      'manto largo': { precio: 95, tiempo: 120 }
-    }
-  },
-  'xl': {
-    nombre: 'XL (Muy Grande)',
-    ejemplos: ['Golden Retriever', 'Pastor Alemán', 'Husky', 'Poodle Gigante', 'Galgo Afgano'],
-    servicios: {
-      'pelo corto': { precio: 80, tiempo: 105 },
-      'corte y cepillado': { precio: 90, tiempo: 120 },
-      'manto largo': { precio: 110, tiempo: 135 }
-    }
-  }
+const SERVICIOS = {
+  'baño': { nombre: 'Baño 🛁', precio: 'desde $55-$100' },
+  'cepillado': { nombre: 'Cepillado 🪮', precio: 'desde $55-$100' },
+  'secado': { nombre: 'Secado 🌬️', precio: 'desde $55-$100' },
+  'limpieza de oídos': { nombre: 'Limpieza de oídos 👂', precio: 'desde $55-$100' },
+  'corte de uñas': { nombre: 'Corte de uñas 🐾', precio: 'desde $55-$100' },
+  'despeje de bikini': { nombre: 'Despeje de área de bikini ✂️', precio: 'desde $55-$100' },
+  'despeje de pulpejos': { nombre: 'Despeje de pulpejos 🐾', precio: 'desde $55-$100' },
+  'accesorios y perfume': { nombre: 'Accesorios y perfume 🎀', precio: 'desde $55-$100' }
+};
+
+const TAMANIOS = {
+  'perro-pequeño': { display: 'Perro Pequeño 🐶', precio: 'desde $55' },
+  'perro-mediano': { display: 'Perro Mediano 🐕', precio: 'desde $65' },
+  'perro-grande': { display: 'Perro Grande 🦮', precio: 'desde $80 - $90' },
+  'perro-extra': { display: 'Perro Extra Grande 🐕‍🦺', precio: 'desde $100' },
+  'gato-corto': { display: 'Gato Pelo Corto 🐱', precio: 'desde $65' },
+  'gato-largo': { display: 'Gato Pelo Largo/Semilargo 🐱‍🐉', precio: 'desde $75' },
+  'gato-corte': { display: 'Gato que requiere corte ✂️🐱', precio: 'desde $85' }
 };
 
 const SESIONES = {};
@@ -129,7 +103,7 @@ async function obtenerEventosDelDia(fecha) {
   }
 }
 
-async function verificarDisponibilidad(fecha, hora, tiempoServicio) {
+async function verificarDisponibilidad(fecha, hora, tiempoServicio = 120) {
   try {
     const eventos = await obtenerEventosDelDia(fecha);
     const horaFormato24h = convertirHora24h(hora);
@@ -164,18 +138,18 @@ async function crearEventoEnCalendar(datos) {
     
     const fechaInicio = new Date(año, mes - 1, dia, horas, minutos);
     const fechaFin = new Date(fechaInicio);
-    fechaFin.setMinutes(fechaFin.getMinutes() + datos.tiempoServicio);
+    fechaFin.setMinutes(fechaFin.getMinutes() + 110); // 1h 50min aprox
 
     const evento = {
-      summary: `${datos.mascota} - ${datos.tamanio} - ${datos.servicio}`,
-      description: `Cliente: ${datos.cliente}\nTeléfono: ${datos.telefono}\nTipo: ${datos.tipo}\nRaza/Tamaño: ${datos.raza}\nServicio: ${datos.servicio}\nDuración: ${datos.tiempoServicio} min\nPrecio: $${datos.precio}`,
+      summary: `${datos.mascota} - ${datos.servicio}`,
+      description: `Cliente: ${datos.cliente}\nTeléfono: ${datos.telefono}\nTamaño: ${datos.tamanio}\nServicio: ${datos.servicio}\nDepósito de $30 requerido\nPago: Zelle 267-702-9312`,
       start: { 
         dateTime: fechaInicio.toISOString(), 
-        timeZone: TIMEZONE // ⭐ ZONA HORARIA CORRECTA
+        timeZone: TIMEZONE
       },
       end: { 
         dateTime: fechaFin.toISOString(),
-        timeZone: TIMEZONE // ⭐ ZONA HORARIA CORRECTA
+        timeZone: TIMEZONE
       },
     };
 
@@ -201,24 +175,39 @@ async function procesarMensaje(mensaje, senderId) {
   const sesion = SESIONES[senderId];
 
   if (sesion.paso === 0) {
-    if (['agendar', 'agendar cita', 'cita', 'reserva'].some(p => textoNorm.includes(p))) {
+    if (['agendar', 'agendar cita', 'cita', 'reserva', 'quiero'].some(p => textoNorm.includes(p))) {
       sesion.paso = 1;
       return {
-        response: '¡Perfecto! 📋\n\n¿Es un perro o un gato?\n\n1️⃣ Perro\n2️⃣ Gato'
+        response: '¡Hola! 👋 Qué emoción que quieras agendar con nosotros 💕\n\n¿Tu mascota es un perro o un gato? 🐕🐱'
       };
-    } else if (['precio', 'precios'].some(p => textoNorm.includes(p))) {
-      let respuesta = '💰 PRECIOS - WUAU PET SPA:\n\n';
-      Object.entries(RAZAS_DATA).forEach(([key, data]) => {
-        respuesta += `${data.nombre}:\n`;
-        Object.entries(data.servicios).forEach(([servicio, info]) => {
-          respuesta += `  • ${servicio}: $${info.precio}\n`;
-        });
-        respuesta += '\n';
-      });
+    } else if (['precio', 'precios', 'cuanto cuesta'].some(p => textoNorm.includes(p))) {
+      let respuesta = '💰 Nuestros precios varían según el tamaño, comportamiento y estado del pelaje:\n\n';
+      respuesta += '🐕 PERROS:\n';
+      respuesta += '• Pequeños: desde $55\n';
+      respuesta += '• Medianos: desde $65\n';
+      respuesta += '• Grandes: desde $80 - $90\n';
+      respuesta += '• Extra Grande: desde $100\n\n';
+      respuesta += '🐱 GATOS:\n';
+      respuesta += '• Pelo corto: desde $65\n';
+      respuesta += '• Pelo largo/semilargo: desde $75\n';
+      respuesta += '• Con corte: desde $85\n\n';
+      respuesta += '⏰ El tiempo aproximado es de 1 hora 20 minutos a 2 horas';
+      return { response: respuesta };
+    } else if (['servicio', 'servicios', 'qué haces'].some(p => textoNorm.includes(p))) {
+      let respuesta = 'Te cuento cuáles son nuestros servicios con mucho amor 💖:\n\n';
+      respuesta += '🛁 Baño\n';
+      respuesta += '🪮 Cepillado\n';
+      respuesta += '🌬️ Secado\n';
+      respuesta += '👂 Limpieza de oídos\n';
+      respuesta += '🐾 Corte de uñas\n';
+      respuesta += '✂️ Despeje de área de bikini\n';
+      respuesta += '🐾 Despeje de pulpejos\n';
+      respuesta += '🎀 Accesorios y perfume\n\n';
+      respuesta += '¿Quieres agendar una cita? 🐾';
       return { response: respuesta };
     } else {
       return {
-        response: '¡Hola! 👋 Bienvenido a WUAU PET SPA. ¿En qué puedo ayudarte?\n\n1️⃣ Agendar cita\n2️⃣ Ver precios'
+        response: '¡Hola! 👋 Soy Lesly de WUAU PET SPA 🐕🐱✂️\n\n¿En qué puedo ayudarte?\n\n1️⃣ Agendar cita\n2️⃣ Ver precios\n3️⃣ Conocer nuestros servicios'
       };
     }
   }
@@ -228,73 +217,91 @@ async function procesarMensaje(mensaje, senderId) {
       sesion.tipo = 'Perro';
       sesion.paso = 2;
       return {
-        response: '¡Perfecto! Perro 🐕\n\n¿Qué tamaño tiene?\n\n1️⃣ XS (Pequeño)\n2️⃣ S (Pequeño-Mediano)\n3️⃣ M (Mediano)\n4️⃣ L (Grande)\n5️⃣ XL (Muy Grande)'
+        response: '¡Perfecto! 🐕 Qué linda mascota 💕\n\n¿Cuál es el tamaño de tu perrito?\n\n1️⃣ Pequeño (Pincher, Chihuahua, mestizos pequeños)\n2️⃣ Mediano (Poodle, Shih Tzu, Yorkie, etc)\n3️⃣ Grande (Bulldog, Boxer, Pitbull)\n4️⃣ Extra Grande (Pastor Alemán, Poodle Gigante, Galgo Afgano)'
       };
     } else if (textoNorm.includes('gato') || textoNorm === '2') {
       sesion.tipo = 'Gato';
       sesion.paso = 2;
       return {
-        response: '¡Perfecto! Gato 🐱\n\n¿Qué tamaño tiene?\n\n1️⃣ XS (Pequeño)\n2️⃣ S (Pequeño-Mediano)\n3️⃣ M (Mediano)\n4️⃣ L (Grande)\n5️⃣ XL (Muy Grande)'
+        response: '¡Qué bonito! 🐱 Amo trabajar con gatitos 💖\n\n¿Cómo es el pelaje de tu minino?\n\n1️⃣ Pelo corto\n2️⃣ Pelo largo o semilargo\n3️⃣ Requiere corte'
       };
     }
-    return { response: 'Por favor, elige: 1️⃣ Perro o 2️⃣ Gato' };
+    return { response: 'Cuéntame, ¿es un perro o un gato? 🐕🐱' };
   }
 
   if (sesion.paso === 2) {
-    const tamanioKeys = Object.keys(RAZAS_DATA);
-    const tamanioEncontrado = tamanioKeys.find(key => textoNorm.includes(key) || textoNorm === String(tamanioKeys.indexOf(key) + 1));
-    
-    if (tamanioEncontrado) {
-      sesion.tamanio = tamanioEncontrado;
-      sesion.tamanioNombre = RAZAS_DATA[tamanioEncontrado].nombre;
-      sesion.paso = 3;
+    if (sesion.tipo === 'Perro') {
+      const tamanios = ['pequeño', 'mediano', 'grande', 'extra grande'];
+      const tamanioIdx = tamanios.findIndex(t => textoNorm.includes(t));
       
-      let menuServicios = `Perfecto, ${sesion.tamanioNombre}. 🐾\n\n¿Qué servicio necesitas?\n\n`;
-      Object.entries(RAZAS_DATA[tamanioEncontrado].servicios).forEach(([servicio, info], idx) => {
-        menuServicios += `${idx + 1}️⃣ ${servicio} - $${info.precio}\n`;
-      });
-      
-      return { response: menuServicios };
+      if (tamanioIdx >= 0) {
+        const tamanioKey = ['perro-pequeño', 'perro-mediano', 'perro-grande', 'perro-extra'][tamanioIdx];
+        sesion.tamanio = TAMANIOS[tamanioKey].display;
+        sesion.precio = TAMANIOS[tamanioKey].precio;
+        sesion.paso = 3;
+        return {
+          response: `¡Perfecto! ${sesion.tamanio} ${sesion.precio} 🐾\n\n¿Cuál es el nombre de tu perrito?`
+        };
+      }
+    } else if (sesion.tipo === 'Gato') {
+      if (textoNorm.includes('corto') || textoNorm === '1') {
+        sesion.tamanio = TAMANIOS['gato-corto'].display;
+        sesion.precio = TAMANIOS['gato-corto'].precio;
+        sesion.paso = 3;
+        return {
+          response: `¡Lindo! ${sesion.tamanio} ${sesion.precio} 🐱\n\n¿Cuál es el nombre de tu gatito?`
+        };
+      } else if (textoNorm.includes('largo') || textoNorm.includes('semilargo') || textoNorm === '2') {
+        sesion.tamanio = TAMANIOS['gato-largo'].display;
+        sesion.precio = TAMANIOS['gato-largo'].precio;
+        sesion.paso = 3;
+        return {
+          response: `¡Qué hermoso! ${sesion.tamanio} ${sesion.precio} 🐱‍🐉\n\n¿Cuál es el nombre de tu gatito?`
+        };
+      } else if (textoNorm.includes('corte') || textoNorm === '3') {
+        sesion.tamanio = TAMANIOS['gato-corte'].display;
+        sesion.precio = TAMANIOS['gato-corte'].precio;
+        sesion.paso = 3;
+        return {
+          response: `¡Perfecto! ${sesion.tamanio} ${sesion.precio} ✂️🐱\n\n¿Cuál es el nombre de tu gatito?`
+        };
+      }
     }
-    return { response: 'Por favor, elige un tamaño: XS, S, M, L o XL' };
+    return { response: 'Cuéntame cuál es el tamaño o tipo de pelaje 🐾' };
   }
 
   if (sesion.paso === 3) {
-    const serviciosDisponibles = Object.keys(RAZAS_DATA[sesion.tamanio].servicios);
-    const servicioEncontrado = serviciosDisponibles.find(s => textoNorm.includes(normalizar(s)));
-    
-    if (servicioEncontrado) {
-      sesion.servicio = servicioEncontrado;
-      const info = RAZAS_DATA[sesion.tamanio].servicios[servicioEncontrado];
-      sesion.precio = info.precio;
-      sesion.tiempoServicio = info.tiempo;
-      sesion.paso = 4;
-      
-      return {
-        response: `Excelente. ${servicioEncontrado.toUpperCase()}\n💰 Precio: $${sesion.precio}\n⏱️ Duración: ${sesion.tiempoServicio} minutos\n\n¿Cuál es tu nombre?`
-      };
-    }
-    return { response: 'Por favor, elige un servicio.' };
+    sesion.mascota = mensaje;
+    sesion.paso = 4;
+    return { response: `¡Qué lindo nombre! 💕 ${sesion.mascota} va a estar hermoso aquí 🐾\n\n¿Cuál es tu nombre?` };
   }
 
   if (sesion.paso === 4) {
     sesion.cliente = mensaje;
     sesion.paso = 5;
-    return { response: '¿Cuál es el nombre de tu mascota? 🐕🐱' };
+    return { response: `Mucho gusto, ${sesion.cliente} 😊 ¿Cuál es tu número de teléfono para confirmar la cita?` };
   }
 
   if (sesion.paso === 5) {
-    sesion.mascota = mensaje;
+    sesion.telefono = mensaje;
     sesion.paso = 6;
-    return { response: '¿Cuál es tu número de teléfono?' };
+    return {
+      response: `Perfecto ☎️ ¿Qué servicio te gustaría para ${sesion.mascota}? 🐾\n\n1️⃣ Baño\n2️⃣ Cepillado\n3️⃣ Secado\n4️⃣ Limpieza de oídos\n5️⃣ Corte de uñas\n6️⃣ Despeje de área de bikini\n7️⃣ Despeje de pulpejos\n8️⃣ Accesorios y perfume`
+    };
   }
 
   if (sesion.paso === 6) {
-    sesion.telefono = mensaje;
-    sesion.paso = 7;
-    return {
-      response: '📅 ¿Qué día prefieres? (Escribe MM/DD/YYYY)\n\nEJEMPLO: 08/17/2026'
-    };
+    const servicios = ['baño', 'cepillado', 'secado', 'limpieza de oídos', 'corte de uñas', 'despeje de bikini', 'despeje de pulpejos', 'accesorios y perfume'];
+    const servicioEncontrado = servicios.find(s => textoNorm.includes(normalizar(s)));
+    
+    if (servicioEncontrado) {
+      sesion.servicio = servicioEncontrado.charAt(0).toUpperCase() + servicioEncontrado.slice(1);
+      sesion.paso = 7;
+      return {
+        response: `¡Excelente! 💅 ${sesion.servicio} para ${sesion.mascota}\n\n📅 ¿Qué día te gustaría? (Escribe MM/DD/YYYY)\n\nEjemplo: 08/30/2026`
+      };
+    }
+    return { response: 'Cuéntame cuál servicio necesitas 🐾' };
   }
 
   if (sesion.paso === 7) {
@@ -313,7 +320,7 @@ async function procesarMensaje(mensaje, senderId) {
     sesion.horariosDisponibles = horariosDisponibles;
     
     return {
-      response: `¿Qué hora prefieres?\n\n${horariosDisponibles.map((h, i) => `${i + 1}️⃣ ${h}`).join('\n')}`
+      response: `Perfecto 📅 ¿Qué hora te viene mejor?\n\n${horariosDisponibles.map((h, i) => `${i + 1}️⃣ ${h}`).join('\n')}`
     };
   }
 
@@ -321,54 +328,54 @@ async function procesarMensaje(mensaje, senderId) {
     const horaEncontrada = sesion.horariosDisponibles.find(h => textoNorm.includes(normalizar(h)));
     if (horaEncontrada) {
       sesion.hora = horaEncontrada;
-      sesion.raza = RAZAS_DATA[sesion.tamanio].nombre;
       sesion.paso = 9;
       
-      const disponible = await verificarDisponibilidad(sesion.fecha, sesion.hora, sesion.tiempoServicio);
+      const disponible = await verificarDisponibilidad(sesion.fecha, sesion.hora, 110);
       
       if (!disponible) {
         sesion.paso = 8;
         return {
-          response: `❌ Lo siento, esa hora no está disponible. El servicio dura ${sesion.tiempoServicio} minutos.\n\n¿Otra hora?\n\n${sesion.horariosDisponibles.map((h, i) => `${i + 1}️⃣ ${h}`).join('\n')}`
+          response: `Lo siento 😔 esa hora no está disponible en este momento. ¿Te gustaría otra hora?\n\n${sesion.horariosDisponibles.map((h, i) => `${i + 1}️⃣ ${h}`).join('\n')}`
         };
       }
       
       try {
         await crearEventoEnCalendar(sesion);
         
-        let confirmacion = '✅ ¡¡¡CITA CONFIRMADA!!! 📋\n\n';
+        let confirmacion = '✅ ¡¡¡CITA CONFIRMADA!!! 💕\n\n';
         confirmacion += `🐾 Mascota: ${sesion.mascota}\n`;
         confirmacion += `👤 Cliente: ${sesion.cliente}\n`;
-        confirmacion += `🐕🐱 Tipo: ${sesion.tipo}\n`;
-        confirmacion += `📏 Tamaño: ${sesion.tamanioNombre}\n`;
+        confirmacion += `📏 Tamaño: ${sesion.tamanio}\n`;
         confirmacion += `✂️ Servicio: ${sesion.servicio}\n`;
-        confirmacion += `💰 Precio: $${sesion.precio}\n`;
-        confirmacion += `⏱️ Duración: ${sesion.tiempoServicio} min\n`;
+        confirmacion += `💰 Precio: ${sesion.precio}\n`;
         confirmacion += `📅 Fecha: ${sesion.fecha}\n`;
-        confirmacion += `🕐 Hora: ${sesion.hora}\n`;
-        confirmacion += `📞 Teléfono: ${sesion.telefono}\n\n`;
-        confirmacion += `¡Tu cita está en Google Calendar! Gracias por confiar en WUAU PET SPA 🐕🐱`;
+        confirmacion += `🕐 Hora: ${sesion.hora}\n\n`;
+        confirmacion += `💛 IMPORTANTE - DEPÓSITO REQUERIDO: $30\n`;
+        confirmacion += `📲 Pago por Zelle al: 267-702-9312\n`;
+        confirmacion += `Envía el soporte de pago para confirmar la cita ✅\n\n`;
+        confirmacion += `⏰ Duración aproximada: 1 hora 20 minutos a 2 horas\n\n`;
+        confirmacion += `¡Gracias por confiar en WUAU PET SPA! 🐕🐱💖\nTe esperamos con mucho amor y paciencia 🐾✨`;
         
         delete SESIONES[senderId];
         
         return { response: confirmacion };
       } catch (error) {
-        return { response: `Error: ${error.message}. Intenta de nuevo.` };
+        return { response: `Oops, algo pasó 😅 ${error.message}\n\nPero no te preocupes, puedes llamarme al 267-702-9312` };
       }
     }
-    return { response: 'Por favor, selecciona una hora.' };
+    return { response: 'Cuéntame la hora que prefieres 🕐' };
   }
 
-  return { response: 'No entendí tu pregunta. ¿En qué puedo ayudarte?' };
+  return { response: '¿En qué te puedo ayudar? 💕' };
 }
 
 app.get('/', (req, res) => {
   res.json({
-    bot: '🐕🐱 WUAU PET SPA BOT v10.3',
-    version: '10.3.0',
-    status: 'LIVE - Zona horaria corregida',
-    timezone: TIMEZONE,
-    features: ['Perro/Gato', 'Precios dinámicos', 'Disponibilidad inteligente', 'Google Calendar con zona horaria correcta']
+    bot: '🐕🐱 WUAU PET SPA BOT v10.4',
+    version: '10.4.0',
+    status: 'LIVE - Datos REALES de Lesly con tono amable',
+    groomer: 'Lesly Arias',
+    features: ['Perro/Gato', 'Servicios reales de Lesly', 'Precios dinámicos', 'Depósito $30', 'Disponibilidad inteligente', 'Zona horaria correcta', 'Tono genuino y amable']
   });
 });
 
@@ -387,7 +394,7 @@ app.post('/chat', async (req, res) => {
     res.json({
       success: true,
       response: resultado.response,
-      sender: 'WUAU BOT'
+      sender: 'Lesly - WUAU PET SPA'
     });
   } catch (error) {
     console.error('Error:', error);
@@ -401,12 +408,14 @@ app.post('/chat', async (req, res) => {
 
 console.log(`
 ╔════════════════════════════════════════╗
-║  🐕🐱 WUAU PET SPA BOT v10.3            ║
-║  ZONA HORARIA: ${TIMEZONE}              ║
+║  🐕🐱 WUAU PET SPA BOT v10.4            ║
+║  DATOS REALES DE LESLY                 ║
+║  TONO: Amable, Personal, Genuino 💖   ║
 ╚════════════════════════════════════════╝
 `);
 
 app.listen(PORT, () => {
   console.log(`✅ Bot LIVE en puerto ${PORT}`);
-  console.log(`🕐 Zona horaria configurada: ${TIMEZONE}`);
+  console.log(`🐾 Con toda la información y servicios reales de Lesly`);
+  console.log(`💕 Tono amable y personalizado`);
 });
