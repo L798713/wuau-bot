@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * 🐕🐱 WUAU PET SPA BOT v10.2 - DISPONIBILIDAD INTELIGENTE
- * Bloquea horarios automáticamente según duración del servicio
- * Evita conflictos de citas
+ * 🐕🐱 WUAU PET SPA BOT v10.3 - ZONA HORARIA CORREGIDA
+ * Muestra horas correctas en Google Calendar
  */
 
 const express = require('express');
@@ -18,6 +17,7 @@ app.use(bodyParser.json());
 
 const PORT = process.env.PORT || 3000;
 const CALENDAR_ID = '41b56c3adcdac185b06be6c47b85a130f083210e1555f6f3640b367f4044168c@group.calendar.google.com';
+const TIMEZONE = 'America/New_York'; // ⭐ ZONA HORARIA CORRECTA
 
 const serviceAccount = process.env.GOOGLE_CREDENTIALS 
   ? JSON.parse(process.env.GOOGLE_CREDENTIALS)
@@ -106,8 +106,6 @@ function normalizar(texto) {
     .replace(/[^a-z0-9\s]/g, '');
 }
 
-// ============== DISPONIBILIDAD INTELIGENTE ==============
-
 async function obtenerEventosDelDia(fecha) {
   try {
     const inicio = new Date(fecha);
@@ -146,16 +144,15 @@ async function verificarDisponibilidad(fecha, hora, tiempoServicio) {
       const eventoInicio = new Date(evento.start.dateTime);
       const eventoFin = new Date(evento.end.dateTime);
 
-      // Verificar si hay conflicto
       if (!(horaFin <= eventoInicio || horaInicio >= eventoFin)) {
-        return false; // Hay conflicto
+        return false;
       }
     }
 
-    return true; // Está disponible
+    return true;
   } catch (error) {
     console.error('Error verificando disponibilidad:', error.message);
-    return true; // Por seguridad, permite si hay error
+    return true;
   }
 }
 
@@ -172,8 +169,14 @@ async function crearEventoEnCalendar(datos) {
     const evento = {
       summary: `${datos.mascota} - ${datos.tamanio} - ${datos.servicio}`,
       description: `Cliente: ${datos.cliente}\nTeléfono: ${datos.telefono}\nTipo: ${datos.tipo}\nRaza/Tamaño: ${datos.raza}\nServicio: ${datos.servicio}\nDuración: ${datos.tiempoServicio} min\nPrecio: $${datos.precio}`,
-      start: { dateTime: fechaInicio.toISOString() },
-      end: { dateTime: fechaFin.toISOString() },
+      start: { 
+        dateTime: fechaInicio.toISOString(), 
+        timeZone: TIMEZONE // ⭐ ZONA HORARIA CORRECTA
+      },
+      end: { 
+        dateTime: fechaFin.toISOString(),
+        timeZone: TIMEZONE // ⭐ ZONA HORARIA CORRECTA
+      },
     };
 
     const res = await calendar.events.insert({
@@ -321,11 +324,10 @@ async function procesarMensaje(mensaje, senderId) {
       sesion.raza = RAZAS_DATA[sesion.tamanio].nombre;
       sesion.paso = 9;
       
-      // ⭐ VERIFICAR DISPONIBILIDAD ANTES DE CONFIRMAR
       const disponible = await verificarDisponibilidad(sesion.fecha, sesion.hora, sesion.tiempoServicio);
       
       if (!disponible) {
-        sesion.paso = 8; // Volver a paso de seleccionar hora
+        sesion.paso = 8;
         return {
           response: `❌ Lo siento, esa hora no está disponible. El servicio dura ${sesion.tiempoServicio} minutos.\n\n¿Otra hora?\n\n${sesion.horariosDisponibles.map((h, i) => `${i + 1}️⃣ ${h}`).join('\n')}`
         };
@@ -362,10 +364,11 @@ async function procesarMensaje(mensaje, senderId) {
 
 app.get('/', (req, res) => {
   res.json({
-    bot: '🐕🐱 WUAU PET SPA BOT v10.2',
-    version: '10.2.0',
-    status: 'LIVE - Disponibilidad Inteligente',
-    features: ['Perro/Gato', 'Precios dinámicos', 'Disponibilidad en tiempo real', 'Google Calendar']
+    bot: '🐕🐱 WUAU PET SPA BOT v10.3',
+    version: '10.3.0',
+    status: 'LIVE - Zona horaria corregida',
+    timezone: TIMEZONE,
+    features: ['Perro/Gato', 'Precios dinámicos', 'Disponibilidad inteligente', 'Google Calendar con zona horaria correcta']
   });
 });
 
@@ -398,14 +401,12 @@ app.post('/chat', async (req, res) => {
 
 console.log(`
 ╔════════════════════════════════════════╗
-║  🐕🐱 WUAU PET SPA BOT v10.2            ║
-║  DISPONIBILIDAD INTELIGENTE             ║
-║  Bloquea horarios automáticamente       ║
+║  🐕🐱 WUAU PET SPA BOT v10.3            ║
+║  ZONA HORARIA: ${TIMEZONE}              ║
 ╚════════════════════════════════════════╝
 `);
 
 app.listen(PORT, () => {
   console.log(`✅ Bot LIVE en puerto ${PORT}`);
-  console.log(`🔒 Verificación de disponibilidad activa`);
-  console.log(`📅 Google Calendar conectado`);
+  console.log(`🕐 Zona horaria configurada: ${TIMEZONE}`);
 });
