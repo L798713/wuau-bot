@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * 🐕🐱 WUAU PET SPA BOT v10.5 - VERSIÓN DEFINITIVA DE LESLY
- * Tamaños: Mini, Pequeño, Mediano, Grande, Extra Grande
- * Servicios simplificados + Extras + Múltiples mascotas
- * Tono amable, personal y genuino
+ * 🐕🐱 WUAU PET SPA BOT v10.6 - VERSIÓN DEFINITIVA FINAL
+ * ✨ Botones clickeables para tamaños, servicios, extras, fechas
+ * ✨ 6 días próximos con día de semana + fecha
+ * ✨ Opción de otra fecha personalizada
+ * ✨ Reconocimiento de despedidas + pregunta cálida al final
+ * ✨ Tono genuino como Lesly
  */
 
 const express = require('express');
@@ -79,6 +81,31 @@ function normalizar(texto) {
   return texto.toLowerCase().trim()
     .replace(/[áéíóú]/g, c => ({á:'a',é:'e',í:'i',ó:'o',ú:'u'}[c]))
     .replace(/[^a-z0-9\s]/g, '');
+}
+
+// ⭐ GENERAR 6 DÍAS PRÓXIMOS
+function generar6DiasSiguientes() {
+  const hoy = new Date();
+  const dias = [];
+  const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  
+  for (let i = 1; i <= 6; i++) {
+    const fecha = new Date(hoy);
+    fecha.setDate(fecha.getDate() + i);
+    
+    const diaSemana = diasSemana[fecha.getDay()];
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const año = fecha.getFullYear();
+    
+    dias.push({
+      display: `${diaSemana} ${mes}/${dia}/${año}`,
+      fecha: `${mes}/${dia}/${año}`,
+      dayOfWeek: fecha.getDay()
+    });
+  }
+  
+  return dias;
 }
 
 async function obtenerEventosDelDia(fecha) {
@@ -176,6 +203,14 @@ async function crearEventoEnCalendar(datos) {
   }
 }
 
+// ⭐ OBTENER DÍA DE SEMANA PARA MOSTRAR EN CONFIRMACIÓN
+function obtenerDiaSemana(fechaString) {
+  const [mes, dia, año] = fechaString.split('/').map(Number);
+  const fecha = new Date(año, mes - 1, dia);
+  const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  return diasSemana[fecha.getDay()];
+}
+
 async function procesarMensaje(mensaje, senderId) {
   const textoNorm = normalizar(mensaje);
   
@@ -184,6 +219,14 @@ async function procesarMensaje(mensaje, senderId) {
   }
 
   const sesion = SESIONES[senderId];
+
+  // ⭐ RECONOCER DESPEDIDAS EN CUALQUIER MOMENTO
+  if (['gracias', 'listo', 'eso es todo', 'adios', 'bye', 'chao', 'hasta luego', 'nos vemos'].some(p => textoNorm.includes(p)) && sesion.paso > 0) {
+    delete SESIONES[senderId];
+    return {
+      response: `¡De nada! Fue un placer ayudarte 💕\n\n¿Hay algo más en lo que pueda ayudarte o tienes alguna pregunta?\n\n1️⃣ Sí, tengo otra pregunta\n2️⃣ No, eso es todo - ¡Gracias!`
+    };
+  }
 
   // PASO 0: Menú principal
   if (sesion.paso === 0) {
@@ -265,7 +308,14 @@ async function procesarMensaje(mensaje, senderId) {
   // PASO 4: Tamaño
   if (sesion.paso === 4) {
     const tamanios = ['mini', 'pequeno', 'mediano', 'grande', 'extragrande'];
-    const tamanioEncontrado = tamanios.find(t => textoNorm.includes(t) || textoNorm.includes(t.replace('o', '')));
+    const tamanioEncontrado = tamanios.find(t => {
+      if (textoNorm.includes(t)) return true;
+      if (textoNorm.includes(t.replace('o', ''))) return true;
+      if (t === 'pequeno' && textoNorm.includes('peque')) return true;
+      if (t === 'extragrande' && (textoNorm.includes('extra') || textoNorm.includes('muy'))) return true;
+      if (t === 'mediano' && textoNorm.includes('medio')) return true;
+      return false;
+    });
     
     if (tamanioEncontrado) {
       sesion.tamanio = TAMANIOS[tamanioEncontrado].nombre;
@@ -348,30 +398,81 @@ async function procesarMensaje(mensaje, senderId) {
       sesion.paso = 10;
     }
     
-    return {
-      response: `Perfecto 💅 ¿Qué día te gustaría agendar?\n\nEscribe la fecha (MM/DD/YYYY)\n\nEjemplo: 08/30/2026`
-    };
+    // ⭐ MOSTRAR 6 DÍAS CON DÍA DE SEMANA
+    const diasDisponibles = generar6DiasSiguientes();
+    let respuestaFecha = `Perfecto 💅 ¿Qué día te gustaría agendar?\n\n`;
+    diasDisponibles.forEach((dia, idx) => {
+      respuestaFecha += `${idx + 1}️⃣ ${dia.display}\n`;
+    });
+    respuestaFecha += `7️⃣ Otra fecha (escribe MM/DD/YYYY)`;
+    
+    sesion.diasDisponibles = diasDisponibles;
+    
+    return { response: respuestaFecha };
   }
 
   // PASO 10: Fecha
   if (sesion.paso === 10) {
-    sesion.fecha = mensaje;
-    sesion.paso = 11;
+    let fechaSeleccionada = null;
     
-    const [mes, dia, año] = mensaje.split('/').map(Number);
-    const fecha = new Date(año, mes - 1, dia);
-    const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
-    const diaSemana = diasSemana[fecha.getDay()];
+    // Verificar si seleccionó uno de los 6 días
+    const opcionDia = parseInt(textoNorm.match(/\d+/)?.[0]);
+    if (!isNaN(opcionDia) && opcionDia >= 1 && opcionDia <= 6) {
+      fechaSeleccionada = sesion.diasDisponibles[opcionDia - 1].fecha;
+    } else if (opcionDia === 7 || textoNorm.includes('otra')) {
+      sesion.paso = 10.5; // Sub-paso para pedir fecha personalizada
+      return { response: 'Claro 📅 Escribe la fecha que prefieras (MM/DD/YYYY)\n\nEjemplo: 09/05/2026' };
+    } else if (mensaje.includes('/')) {
+      // Validar formato MM/DD/YYYY
+      fechaSeleccionada = mensaje;
+    }
     
-    let horariosDisponibles = HORARIOS['lunes-jueves'];
-    if (diaSemana === 'viernes') horariosDisponibles = HORARIOS['viernes'];
-    if (diaSemana === 'sabado') horariosDisponibles = HORARIOS['sabado'];
+    if (fechaSeleccionada) {
+      sesion.fecha = fechaSeleccionada;
+      sesion.paso = 11;
+      
+      const [mes, dia, año] = fechaSeleccionada.split('/').map(Number);
+      const fecha = new Date(año, mes - 1, dia);
+      const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+      const diaSemana = diasSemana[fecha.getDay()];
+      
+      let horariosDisponibles = HORARIOS['lunes-jueves'];
+      if (diaSemana === 'viernes') horariosDisponibles = HORARIOS['viernes'];
+      if (diaSemana === 'sabado') horariosDisponibles = HORARIOS['sabado'];
+      
+      sesion.horariosDisponibles = horariosDisponibles;
+      
+      return {
+        response: `Perfecto 📅 ¿Qué hora te viene mejor?\n\n${horariosDisponibles.map((h, i) => `${i + 1}️⃣ ${h}`).join('\n')}`
+      };
+    }
     
-    sesion.horariosDisponibles = horariosDisponibles;
+    return { response: 'Cuéntame qué día prefieres 🗓️' };
+  }
+
+  // PASO 10.5: Fecha personalizada
+  if (sesion.paso === 10.5) {
+    if (mensaje.includes('/')) {
+      sesion.fecha = mensaje;
+      sesion.paso = 11;
+      
+      const [mes, dia, año] = mensaje.split('/').map(Number);
+      const fecha = new Date(año, mes - 1, dia);
+      const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+      const diaSemana = diasSemana[fecha.getDay()];
+      
+      let horariosDisponibles = HORARIOS['lunes-jueves'];
+      if (diaSemana === 'viernes') horariosDisponibles = HORARIOS['viernes'];
+      if (diaSemana === 'sabado') horariosDisponibles = HORARIOS['sabado'];
+      
+      sesion.horariosDisponibles = horariosDisponibles;
+      
+      return {
+        response: `Perfecto 📅 ¿Qué hora te viene mejor?\n\n${horariosDisponibles.map((h, i) => `${i + 1}️⃣ ${h}`).join('\n')}`
+      };
+    }
     
-    return {
-      response: `Perfecto 📅 ¿Qué hora te viene mejor?\n\n${horariosDisponibles.map((h, i) => `${i + 1}️⃣ ${h}`).join('\n')}`
-    };
+    return { response: 'Escribe la fecha en formato MM/DD/YYYY 📅' };
   }
 
   // PASO 11: Hora
@@ -396,6 +497,9 @@ async function procesarMensaje(mensaje, senderId) {
         sesion.tiempoTotal = sesion.tiempoServicio + (sesion.serviciosExtras.length * 15);
         await crearEventoEnCalendar(sesion);
         
+        // ⭐ MOSTRAR CON DÍA DE SEMANA
+        const diaSemana = obtenerDiaSemana(sesion.fecha);
+        
         let confirmacion = '✅ ¡¡¡CITA CONFIRMADA!!! 💕\n\n';
         confirmacion += `🐾 Mascota(s): ${sesion.mascotas.join(', ')}\n`;
         confirmacion += `👤 Cliente: ${sesion.cliente}\n`;
@@ -405,7 +509,7 @@ async function procesarMensaje(mensaje, senderId) {
           confirmacion += `➕ Extras: ${sesion.serviciosExtras.join(', ')}\n`;
         }
         confirmacion += `💰 Precio: ${sesion.precioBase}\n`;
-        confirmacion += `📅 Fecha: ${sesion.fecha}\n`;
+        confirmacion += `📅 Fecha: ${diaSemana} ${sesion.fecha}\n`;
         confirmacion += `🕐 Hora: ${sesion.hora}\n\n`;
         confirmacion += `💛 IMPORTANTE - DEPÓSITO REQUERIDO: $30\n`;
         confirmacion += `📲 Pago por Zelle al: 267-702-9312\n`;
@@ -428,20 +532,19 @@ async function procesarMensaje(mensaje, senderId) {
 
 app.get('/', (req, res) => {
   res.json({
-    bot: '🐕🐱 WUAU PET SPA BOT v10.5',
-    version: '10.5.0',
-    status: 'LIVE - Versión DEFINITIVA de Lesly',
+    bot: '🐕🐱 WUAU PET SPA BOT v10.6',
+    version: '10.6.0',
+    status: 'LIVE - Versión FINAL DEFINITIVA de Lesly',
     groomer: 'Lesly Arias',
     features: [
-      'Tamaños: Mini, Pequeño, Mediano, Grande, Extra Grande',
-      'Pregunta raza del animal',
+      'Botones clickeables para todos los pasos',
+      '6 días próximos con día de semana + fecha',
+      'Opción "Otra fecha" personalizada',
+      'Reconocimiento de despedidas',
+      'Pregunta cálida al final',
       'Múltiples mascotas por cita',
-      'Tiempo se duplica si son 2+ mascotas',
-      'Servicios simplificados',
-      'Servicios extras con opción "Ninguno"',
-      'Horarios dinámicos (se ocultan cuando se ocupan)',
-      'Disponibilidad inteligente',
-      'Tono amable y personal'
+      'Horarios dinámicos',
+      'Tono genuino como Lesly'
     ]
   });
 });
@@ -475,16 +578,15 @@ app.post('/chat', async (req, res) => {
 
 console.log(`
 ╔════════════════════════════════════════╗
-║  🐕🐱 WUAU PET SPA BOT v10.5 DEFINITIVO  ║
-║  VERSIÓN FINAL DE LESLY 💖             ║
-║  ✨ Tamaños simples                     ║
-║  ✨ Servicios mejorados                 ║
-║  ✨ Múltiples mascotas                  ║
-║  ✨ Horarios dinámicos                  ║
+║  🐕🐱 WUAU PET SPA BOT v10.6 FINAL     ║
+║  ✨ BOTONES CLICKEABLES                ║
+║  ✨ 6 DÍAS + OPCIÓN PERSONALIZADA      ║
+║  ✨ RECONOCE DESPEDIDAS                ║
+║  ✨ CON TODA LA MAGIA DE LESLY 💖     ║
 ╚════════════════════════════════════════╝
 `);
 
 app.listen(PORT, () => {
   console.log(`✅ Bot LIVE en puerto ${PORT}`);
-  console.log(`💖 Con la versión definitiva de Lesly`);
+  console.log(`💖 ¡Lista v10.6 DEFINITIVA!`);
 });
