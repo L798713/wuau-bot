@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🐕🐱 WUAU PET SPA - Grooming Profesional</title>
+    <title>WUAU PET SPA - Grooming Profesional</title>
     <style>
         * {
             margin: 0;
@@ -11,180 +11,66 @@
             box-sizing: border-box;
         }
 
-        :root {
-            --turquesa: #20B2AA;
-            --turquesa-oscuro: #1a8a82;
-            --gris-claro: #f8f9fa;
-            --blanco: #ffffff;
-            --gris-texto: #555555;
-            --sombra: 0 2px 8px rgba(0, 0, 0, 0.1);
-            --sombra-fuerte: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, var(--gris-claro) 0%, #f0f8f8 100%);
-            color: var(--gris-texto);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            padding: 20px;
         }
 
-        /* HEADER */
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            overflow: hidden;
+        }
+
         .header {
-            background: linear-gradient(135deg, var(--turquesa) 0%, var(--turquesa-oscuro) 100%);
-            color: var(--blanco);
-            padding: 20px 15px;
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            color: white;
+            padding: 30px 20px;
             text-align: center;
-            box-shadow: var(--sombra-fuerte);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
         .header h1 {
             font-size: 28px;
+            margin-bottom: 5px;
             font-weight: 700;
-            margin-bottom: 8px;
         }
 
-        .header-subtitle {
-            font-size: 12px;
-            opacity: 0.95;
-            margin-bottom: 8px;
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
         }
 
         .status-badge {
             display: inline-block;
-            background: rgba(255,255,255,0.3);
-            padding: 4px 12px;
+            background: #10b981;
+            color: white;
+            padding: 5px 12px;
             border-radius: 20px;
-            font-size: 11px;
-            font-weight: 500;
-        }
-
-        /* CONTAINER */
-        .container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 15px;
-            max-width: 600px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        /* WELCOME */
-        .welcome-section {
-            background: var(--blanco);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: var(--sombra);
-            border-left: 4px solid var(--turquesa);
-        }
-
-        .welcome-message {
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-            margin-bottom: 10px;
-        }
-
-        .animal-icon {
-            font-size: 32px;
-            flex-shrink: 0;
-        }
-
-        .welcome-text h2 {
-            color: var(--turquesa-oscuro);
-            font-size: 18px;
-            margin-bottom: 4px;
-            font-weight: 600;
-        }
-
-        .welcome-text p {
-            font-size: 13px;
-            color: var(--gris-texto);
-            line-height: 1.5;
-        }
-
-        /* MENU BUTTONS */
-        .menu-section {
-            margin-bottom: 15px;
-        }
-
-        .menu-title {
             font-size: 12px;
+            margin-top: 10px;
             font-weight: 600;
-            color: var(--turquesa);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-            padding-left: 5px;
         }
 
-        .menu-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .menu-btn {
-            background: var(--blanco);
-            border: 2px solid var(--turquesa);
-            color: var(--turquesa);
-            padding: 14px 12px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            box-shadow: var(--sombra);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .menu-btn:hover {
-            background: var(--turquesa);
-            color: var(--blanco);
-            transform: translateY(-2px);
-            box-shadow: var(--sombra-fuerte);
-        }
-
-        .menu-btn:active {
-            transform: translateY(0);
-        }
-
-        .menu-icon {
-            font-size: 24px;
-        }
-
-        /* CHAT */
         .chat-container {
             flex: 1;
-            background: var(--blanco);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
             overflow-y: auto;
-            box-shadow: var(--sombra);
-            display: flex;
-            flex-direction: column;
-            max-height: 400px;
-        }
-
-        .messages {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            padding: 20px;
+            background: #f8f9fa;
         }
 
         .message {
+            margin-bottom: 15px;
             display: flex;
-            gap: 8px;
             animation: slideIn 0.3s ease;
-            flex-direction: column;
         }
 
         @keyframes slideIn {
@@ -198,403 +84,214 @@
             }
         }
 
-        .bot-message {
-            align-items: flex-start;
+        .message.bot {
+            justify-content: flex-start;
         }
 
-        .user-message {
-            align-items: flex-end;
+        .message.user {
+            justify-content: flex-end;
         }
 
-        .message-header {
-            display: flex;
-            gap: 8px;
-            align-items: flex-start;
-        }
-
-        .message-avatar {
-            font-size: 28px;
-            flex-shrink: 0;
-        }
-
-        .message-bubble {
+        .message-content {
             max-width: 80%;
-            padding: 12px 14px;
-            border-radius: 14px;
-            font-size: 13px;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
             line-height: 1.4;
-            word-wrap: break-word;
+            font-size: 14px;
         }
 
-        .bot-message .message-bubble {
-            background: #f0f0f0;
-            color: var(--gris-texto);
-            border-bottom-left-radius: 4px;
+        .message.bot .message-content {
+            background: white;
+            color: #333;
+            border-left: 4px solid #4a90e2;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
-        .user-message .message-bubble {
-            background: var(--turquesa);
-            color: var(--blanco);
-            border-bottom-right-radius: 4px;
+        .message.user .message-content {
+            background: #4a90e2;
+            color: white;
+            border-radius: 18px;
         }
 
-        /* BOTONES DE OPCIONES INTELIGENTES */
-        .response-options {
-            margin-top: 10px;
-            max-width: 80%;
-        }
-
-        .options-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .option-btn {
-            background: var(--turquesa);
-            color: var(--blanco);
-            border: none;
-            padding: 10px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: center;
-            word-wrap: break-word;
-        }
-
-        .option-btn:hover {
-            background: var(--turquesa-oscuro);
-            transform: scale(1.05);
-        }
-
-        .option-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* INPUT */
         .input-container {
             display: flex;
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
             gap: 10px;
-            margin-bottom: 10px;
         }
 
-        #messageInput {
+        .input-container input {
             flex: 1;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
+            border: 1px solid #ddd;
             border-radius: 25px;
+            padding: 10px 16px;
             font-size: 14px;
-            font-family: inherit;
             outline: none;
-            transition: border-color 0.3s ease;
+            transition: all 0.3s;
         }
 
-        #messageInput:focus {
-            border-color: var(--turquesa);
+        .input-container input:focus {
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
         }
 
-        #sendBtn {
-            background: var(--turquesa);
-            color: var(--blanco);
+        .input-container button {
+            background: #4a90e2;
+            color: white;
             border: none;
-            width: 44px;
-            height: 44px;
             border-radius: 50%;
-            font-size: 20px;
+            width: 40px;
+            height: 40px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s ease;
-            box-shadow: var(--sombra);
+            font-size: 18px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
         }
 
-        #sendBtn:hover {
-            background: var(--turquesa-oscuro);
+        .input-container button:hover {
+            background: #357abd;
             transform: scale(1.05);
         }
 
-        #sendBtn:active {
+        .input-container button:active {
             transform: scale(0.95);
         }
 
-        /* FOOTER */
-        .footer {
-            text-align: center;
-            padding: 15px;
-            font-size: 11px;
-            color: #999;
-            border-top: 1px solid #e0e0e0;
+        .loading {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #4a90e2;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
         }
 
-        .footer p {
-            margin: 3px 0;
+        .loading:nth-child(2) {
+            animation-delay: 0.2s;
         }
 
-        .footer-link {
-            color: var(--turquesa);
-            text-decoration: none;
-            font-weight: 600;
+        .loading:nth-child(3) {
+            animation-delay: 0.4s;
         }
 
-        @media (max-width: 480px) {
-            .header h1 {
-                font-size: 24px;
+        @keyframes bounce {
+            0%, 80%, 100% {
+                opacity: 0.3;
+                transform: scale(1);
             }
-            
-            .options-grid {
-                grid-template-columns: 1fr;
+            40% {
+                opacity: 1;
+                transform: scale(1.2);
             }
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
         }
     </style>
 </head>
 <body>
-    <!-- HEADER -->
-    <div class="header">
-        <div style="font-size: 32px; margin-bottom: 8px;">🐕🐱</div>
-        <h1>WUAU PET SPA</h1>
-        <div class="header-subtitle">Grooming para Perros y Gatos</div>
-        <div class="status-badge">✅ En línea</div>
-    </div>
-
-    <!-- CONTAINER -->
     <div class="container">
-        <!-- WELCOME -->
-        <div class="welcome-section">
-            <div class="welcome-message">
-                <div class="animal-icon">🐕</div>
-                <div class="welcome-text">
-                    <h2>¡Hola! Bienvenido</h2>
-                    <p>Cuidamos a tu mascota con profesionalismo</p>
-                </div>
-            </div>
-            <div class="welcome-message">
-                <div class="animal-icon">🐱</div>
-                <div class="welcome-text">
-                    <p><strong>Para Perros y Gatos</strong> - Servicios personalizados</p>
-                </div>
-            </div>
+        <div class="header">
+            <h1>🐕🐱 WUAU PET SPA</h1>
+            <p>Grooming para Perros y Gatos</p>
+            <div class="status-badge">✓ En línea</div>
         </div>
 
-        <!-- QUICK MENU -->
-        <div class="menu-section">
-            <div class="menu-title">¿Cómo puedo ayudarte?</div>
-            <div class="menu-grid">
-                <button class="menu-btn" onclick="sendMessage('Quiero agendar una cita')">
-                    <span class="menu-icon">📅</span>
-                    <span>Agendar Cita</span>
-                </button>
-                <button class="menu-btn" onclick="sendMessage('Quiero ver los precios')">
-                    <span class="menu-icon">💰</span>
-                    <span>Ver Precios</span>
-                </button>
-                <button class="menu-btn" onclick="sendMessage('¿Cuáles son sus horarios?')">
-                    <span class="menu-icon">🕐</span>
-                    <span>Horarios</span>
-                </button>
-                <button class="menu-btn" onclick="sendMessage('Información')">
-                    <span class="menu-icon">ℹ️</span>
-                    <span>Información</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- CHAT -->
-        <div class="chat-container">
-            <div class="messages" id="messagesContainer">
-                <div class="message bot-message">
-                    <div class="message-header">
-                        <div class="message-avatar">🤖</div>
-                        <div class="message-bubble">
-                            ¡Hola! 👋 Soy tu asistente de WUAU PET SPA. Pulsa los botones de arriba o escribe tu pregunta. 🐕🐱
-                        </div>
-                    </div>
+        <div class="chat-container" id="chatContainer">
+            <div class="message bot">
+                <div class="message-content">
+                    ¡Hola! 👋 Bienvenido a WUAU PET SPA. ¿En qué puedo ayudarte?<br><br>
+                    1️⃣ Agendar cita<br>
+                    2️⃣ Ver precios
                 </div>
             </div>
         </div>
 
-        <!-- INPUT -->
         <div class="input-container">
             <input 
                 type="text" 
-                id="messageInput" 
+                id="userInput" 
                 placeholder="O escribe aquí..." 
-                onkeypress="if(event.key==='Enter') sendMessage()"
+                onkeypress="if(event.key==='Enter'){enviarMensaje()}"
             >
-            <button id="sendBtn" onclick="sendMessage()">➤</button>
+            <button onclick="enviarMensaje()">➤</button>
         </div>
     </div>
 
-    <!-- FOOTER -->
-    <div class="footer">
-        <p>🐕🐱 WUAU PET SPA - Grooming Profesional</p>
-        <p>Para Perros y Gatos</p>
-        <p>☎️ <a href="tel:2677029312" class="footer-link">2677029312</a></p>
-    </div>
-
     <script>
-        const BOT_API_URL = 'https://wuau-bot-7vya.onrender.com';
+        const BOT_URL = 'https://wuau-bot-7vya.onrender.com/chat';
+        const chatContainer = document.getElementById('chatContainer');
+        const userInput = document.getElementById('userInput');
+        let userID = 'user_' + Date.now();
 
-        // Detectar opciones numeradas y crear botones
-        function extractOptions(text) {
-            const options = [];
-            const lines = text.split('\n');
+        function agregarMensaje(contenido, esBot) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${esBot ? 'bot' : 'user'}`;
             
-            for (const line of lines) {
-                // Buscar patrones: "1️⃣ Opción" o "1. Opción" o "1 Opción"
-                const match = line.match(/^[1-9]([️⃣ .:\-])\s*(.+?)(?:\s*\([^)]*\))?$/);
-                if (match) {
-                    const optionText = match[2].trim();
-                    if (optionText && optionText.length > 0) {
-                        options.push(optionText);
-                    }
-                }
-            }
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = contenido;
             
-            return options;
+            messageDiv.appendChild(contentDiv);
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        async function sendMessage(text = null) {
-            const input = document.getElementById('messageInput');
-            const message = text || input.value.trim();
+        async function enviarMensaje() {
+            const mensaje = userInput.value.trim();
+            if (!mensaje) return;
 
-            if (!message) return;
+            agregarMensaje(mensaje, false);
+            userInput.value = '';
 
-            input.value = '';
-            addMessage(message, 'user');
-            showTypingIndicator();
+            // Mostrar indicador de carga
+            agregarMensaje('Escribiendo...', true);
+            const ultimoMensaje = chatContainer.lastChild;
 
             try {
-                const response = await fetch(`${BOT_API_URL}/webhook`, {
+                const response = await fetch(BOT_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        data: {
-                            message: message,
-                            sender: '1234567890'
-                        }
+                        message: mensaje,
+                        sender: userID
                     })
                 });
 
-                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status}`);
+                }
 
-                if (data.success) {
-                    removeTypingIndicator();
-                    addMessage(data.response, 'bot');
-                    
-                    // Detectar y crear botones para opciones
-                    const options = extractOptions(data.response);
-                    if (options.length > 0) {
-                        addOptionButtons(options);
-                    }
+                const data = await response.json();
+                
+                // Eliminar mensaje "Escribiendo..."
+                ultimoMensaje.remove();
+                
+                // Agregar respuesta del bot
+                if (data.response) {
+                    agregarMensaje(data.response, true);
                 } else {
-                    removeTypingIndicator();
-                    addMessage('Disculpa, hubo un error. Por favor intenta de nuevo.', 'bot');
+                    agregarMensaje('Lo siento, hubo un error. Intenta de nuevo.', true);
                 }
             } catch (error) {
                 console.error('Error:', error);
-                removeTypingIndicator();
-                addMessage('No pude conectar. Intenta más tarde.', 'bot');
+                ultimoMensaje.remove();
+                agregarMensaje('⚠️ No pude conectar con el servidor. Verifica tu conexión e intenta de nuevo.', true);
             }
         }
 
-        function addMessage(text, sender) {
-            const messagesContainer = document.getElementById('messagesContainer');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender}-message`;
-
-            const header = document.createElement('div');
-            header.className = 'message-header';
-
-            const avatar = document.createElement('div');
-            avatar.className = 'message-avatar';
-            avatar.textContent = sender === 'bot' ? '🐕🐱' : '👤';
-
-            const bubble = document.createElement('div');
-            bubble.className = 'message-bubble';
-            bubble.textContent = text;
-
-            header.appendChild(avatar);
-            header.appendChild(bubble);
-            messageDiv.appendChild(header);
-            messagesContainer.appendChild(messageDiv);
-
-            messagesContainer.parentElement.scrollTop = messagesContainer.parentElement.scrollHeight;
-        }
-
-        function addOptionButtons(options) {
-            const messagesContainer = document.getElementById('messagesContainer');
-            const optionsDiv = document.createElement('div');
-            optionsDiv.className = 'message bot-message';
-
-            const optionsContainer = document.createElement('div');
-            optionsContainer.className = 'response-options';
-
-            // Calcular cuántas columnas usar
-            const columns = options.length <= 3 ? 1 : 2;
-            const grid = document.createElement('div');
-            grid.className = 'options-grid';
-            if (columns === 1) grid.style.gridTemplateColumns = '1fr';
-
-            options.forEach(option => {
-                const btn = document.createElement('button');
-                btn.className = 'option-btn';
-                btn.textContent = option;
-                btn.onclick = () => sendMessage(option);
-                grid.appendChild(btn);
-            });
-
-            optionsContainer.appendChild(grid);
-            optionsDiv.appendChild(optionsContainer);
-            messagesContainer.appendChild(optionsDiv);
-
-            messagesContainer.parentElement.scrollTop = messagesContainer.parentElement.scrollHeight;
-        }
-
-        function showTypingIndicator() {
-            const messagesContainer = document.getElementById('messagesContainer');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message bot-message';
-            messageDiv.id = 'typingIndicator';
-
-            const header = document.createElement('div');
-            header.className = 'message-header';
-
-            const avatar = document.createElement('div');
-            avatar.className = 'message-avatar';
-            avatar.textContent = '🐕🐱';
-
-            const bubble = document.createElement('div');
-            bubble.className = 'message-bubble';
-            bubble.innerHTML = '<div style="display: flex; gap: 4px;"><span style="animation: blink 1.4s infinite;">●</span><span style="animation: blink 1.4s infinite 0.2s;">●</span><span style="animation: blink 1.4s infinite 0.4s;">●</span></div>';
-
-            header.appendChild(avatar);
-            header.appendChild(bubble);
-            messageDiv.appendChild(header);
-            messagesContainer.appendChild(messageDiv);
-
-            messagesContainer.parentElement.scrollTop = messagesContainer.parentElement.scrollHeight;
-        }
-
-        function removeTypingIndicator() {
-            const indicator = document.getElementById('typingIndicator');
-            if (indicator) indicator.remove();
-        }
-
-        window.addEventListener('load', () => {
-            document.getElementById('messageInput').focus();
-        });
+        // Focus en el input al cargar
+        userInput.focus();
     </script>
-    
-    <style>
-        @keyframes blink {
-            0%, 60%, 100% { opacity: 0.5; }
-            30% { opacity: 1; }
-        }
-    </style>
 </body>
 </html>
