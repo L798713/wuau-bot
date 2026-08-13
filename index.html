@@ -93,11 +93,11 @@
         }
 
         .message-content {
-            max-width: 80%;
+            max-width: 85%;
             padding: 12px 16px;
             border-radius: 18px;
             word-wrap: break-word;
-            line-height: 1.4;
+            line-height: 1.5;
             font-size: 14px;
         }
 
@@ -112,6 +112,37 @@
             background: #4a90e2;
             color: white;
             border-radius: 18px;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .option-button {
+            background: #f0f4f8;
+            border: 2px solid #4a90e2;
+            color: #4a90e2;
+            padding: 10px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+            text-align: left;
+            width: 100%;
+        }
+
+        .option-button:hover {
+            background: #4a90e2;
+            color: white;
+            transform: translateX(3px);
+        }
+
+        .option-button:active {
+            transform: scale(0.98);
         }
 
         .input-container {
@@ -161,40 +192,6 @@
         .input-container button:active {
             transform: scale(0.95);
         }
-
-        .loading {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: #4a90e2;
-            border-radius: 50%;
-            animation: bounce 1.4s infinite;
-        }
-
-        .loading:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .loading:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-
-        @keyframes bounce {
-            0%, 80%, 100% {
-                opacity: 0.3;
-                transform: scale(1);
-            }
-            40% {
-                opacity: 1;
-                transform: scale(1.2);
-            }
-        }
-
-        .error-message {
-            color: #e74c3c;
-            font-size: 12px;
-            margin-top: 5px;
-        }
     </style>
 </head>
 <body>
@@ -208,9 +205,7 @@
         <div class="chat-container" id="chatContainer">
             <div class="message bot">
                 <div class="message-content">
-                    ¡Hola! 👋 Bienvenido a WUAU PET SPA. ¿En qué puedo ayudarte?<br><br>
-                    1️⃣ Agendar cita<br>
-                    2️⃣ Ver precios
+                    ¡Hola! 👋 Bienvenido a WUAU PET SPA. ¿En qué puedo ayudarte?
                 </div>
             </div>
         </div>
@@ -232,17 +227,67 @@
         const userInput = document.getElementById('userInput');
         let userID = 'user_' + Date.now();
 
+        function crearBoton(texto, callback) {
+            const btn = document.createElement('button');
+            btn.className = 'option-button';
+            btn.textContent = texto;
+            btn.onclick = () => {
+                callback();
+            };
+            return btn;
+        }
+
+        function formatearMensaje(contenido) {
+            // Convertir \n a <br>
+            return contenido.split('\n').join('<br>');
+        }
+
         function agregarMensaje(contenido, esBot) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${esBot ? 'bot' : 'user'}`;
             
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
-            contentDiv.textContent = contenido;
+            
+            if (esBot) {
+                contentDiv.innerHTML = formatearMensaje(contenido);
+            } else {
+                contentDiv.textContent = contenido;
+            }
             
             messageDiv.appendChild(contentDiv);
             chatContainer.appendChild(messageDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            return messageDiv;
+        }
+
+        function crearBotones(opciones) {
+            const lastMessage = chatContainer.lastChild;
+            if (lastMessage && lastMessage.querySelector('.button-group')) {
+                lastMessage.querySelector('.button-group').remove();
+            }
+
+            const buttonGroup = document.createElement('div');
+            buttonGroup.className = 'button-group';
+            
+            opciones.forEach(({ texto, respuesta }) => {
+                const btn = crearBoton(texto, () => {
+                    enviarMensajeConTexto(respuesta);
+                });
+                buttonGroup.appendChild(btn);
+            });
+
+            if (chatContainer.lastChild) {
+                chatContainer.lastChild.querySelector('.message-content').parentNode.appendChild(buttonGroup);
+            }
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function enviarMensajeConTexto(mensaje) {
+            agregarMensaje(mensaje, false);
+            userInput.value = '';
+            await procesarRespuesta(mensaje);
         }
 
         async function enviarMensaje() {
@@ -251,11 +296,10 @@
 
             agregarMensaje(mensaje, false);
             userInput.value = '';
+            await procesarRespuesta(mensaje);
+        }
 
-            // Mostrar indicador de carga
-            agregarMensaje('Escribiendo...', true);
-            const ultimoMensaje = chatContainer.lastChild;
-
+        async function procesarRespuesta(mensaje) {
             try {
                 const response = await fetch(BOT_URL, {
                     method: 'POST',
@@ -274,23 +318,37 @@
 
                 const data = await response.json();
                 
-                // Eliminar mensaje "Escribiendo..."
-                ultimoMensaje.remove();
-                
-                // Agregar respuesta del bot
                 if (data.response) {
-                    agregarMensaje(data.response, true);
+                    const msgDiv = agregarMensaje(data.response, true);
+                    
+                    // Crear botones basados en el contenido
+                    if (data.response.includes('1️⃣') || data.response.includes('2️⃣') || data.response.includes('3️⃣')) {
+                        const lineas = data.response.split('\n');
+                        const opciones = [];
+                        
+                        lineas.forEach(linea => {
+                            const match = linea.match(/^(\d)️⃣\s+(.+?)(?:\s*-\s*\$?\d+)?$/);
+                            if (match) {
+                                opciones.push({
+                                    texto: linea.replace(/^(\d)️⃣\s+/, ''),
+                                    respuesta: linea.replace(/^(\d)️⃣\s+/, '')
+                                });
+                            }
+                        });
+                        
+                        if (opciones.length > 0) {
+                            crearBotones(opciones);
+                        }
+                    }
                 } else {
                     agregarMensaje('Lo siento, hubo un error. Intenta de nuevo.', true);
                 }
             } catch (error) {
                 console.error('Error:', error);
-                ultimoMensaje.remove();
                 agregarMensaje('⚠️ No pude conectar con el servidor. Verifica tu conexión e intenta de nuevo.', true);
             }
         }
 
-        // Focus en el input al cargar
         userInput.focus();
     </script>
 </body>

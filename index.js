@@ -3,8 +3,7 @@
 /**
  * 🐕🐱 WUAU PET SPA BOT v10 - SISTEMA AVANZADO POR RAZA
  * Bot inteligente con precios dinámicos por raza + servicio + tamaño
- * Disponibilidad en tiempo real basada en duración de servicios
- * Google Calendar integration + Tiempos de proceso
+ * NUEVO: Detecta si es PERRO o GATO
  */
 
 const express = require('express');
@@ -16,8 +15,6 @@ const { google } = require('googleapis');
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
-
-// ============== CONFIGURACIÓN ==============
 
 const PORT = process.env.PORT || 3000;
 const CALENDAR_ID = '41b56c3adcdac185b06be6c47b85a130f083210e1555f6f3640b367f4044168c@group.calendar.google.com';
@@ -33,8 +30,6 @@ const auth = new google.auth.GoogleAuth({
 
 const calendar = google.calendar({ version: 'v3', auth });
 
-// ============== INFORMACIÓN DEL NEGOCIO ==============
-
 const NEGOCIO = {
   nombre: '🐕🐱 WUAU PET SPA',
   dueno: 'Lesly Arias',
@@ -48,8 +43,6 @@ const HORARIOS = {
   'viernes': ['8:30 AM', '10:00 AM', '2:00 PM'],
   'sabado': ['8:00 AM', '10:00 AM', '12:00 PM', '2:00 PM', '4:00 PM']
 };
-
-// ============== BASE DE DATOS - RAZAS, SERVICIOS, PRECIOS ==============
 
 const RAZAS_DATA = {
   'xs': {
@@ -99,18 +92,7 @@ const RAZAS_DATA = {
   }
 };
 
-const SERVICIOS_ADICIONALES = {
-  'corte de unas': { precio: 10, tiempo: 0 },
-  'limpieza de oidos': { precio: 15, tiempo: 0 },
-  'shampoo anti pulgas': { precio: 15, tiempo: 0 },
-  're-hidratacion': { precio: 10, tiempo: 0 }
-};
-
-// ============== MEMORIA DE SESIONES ==============
-
 const SESIONES = {};
-
-// ============== FUNCIONES UTILIDAD ==============
 
 function convertirHora24h(horaString) {
   const [tiempo, periodo] = horaString.split(' ');
@@ -131,8 +113,6 @@ function normalizar(texto) {
     .replace(/[áéíóú]/g, c => ({á:'a',é:'e',í:'i',ó:'o',ú:'u'}[c]))
     .replace(/[^a-z0-9\s]/g, '');
 }
-
-// ============== FUNCIONES GOOGLE CALENDAR ==============
 
 async function obtenerEventosDelDia(fecha) {
   try {
@@ -169,7 +149,7 @@ async function crearEventoEnCalendar(datos) {
 
     const evento = {
       summary: `${datos.mascota} - ${datos.tamanio} - ${datos.servicio}`,
-      description: `Cliente: ${datos.cliente}\nTeléfono: ${datos.telefono}\nRaza/Tipo: ${datos.raza}\nServicio: ${datos.servicio}\nDuración: ${datos.tiempoServicio} min\nPrecio: $${datos.precio}`,
+      description: `Cliente: ${datos.cliente}\nTeléfono: ${datos.telefono}\nTipo: ${datos.tipo}\nRaza/Tamaño: ${datos.raza}\nServicio: ${datos.servicio}\nDuración: ${datos.tiempoServicio} min\nPrecio: $${datos.precio}`,
       start: { dateTime: fechaInicio.toISOString() },
       end: { dateTime: fechaFin.toISOString() },
     };
@@ -186,39 +166,6 @@ async function crearEventoEnCalendar(datos) {
   }
 }
 
-async function obtenerHorariosDisponibles(fecha, horariosDelDia, tiempoServicio) {
-  const eventos = await obtenerEventosDelDia(fecha);
-  
-  const horariosOcupados = [];
-  
-  for (const evento of eventos) {
-    const inicio = new Date(evento.start.dateTime);
-    const fin = new Date(evento.end.dateTime);
-    
-    for (const horario of horariosDelDia) {
-      const [tiempo, periodo] = horario.split(' ');
-      const [horas, minutos] = tiempo.split(':').map(Number);
-      
-      let horasFinales = horas;
-      if (periodo === 'PM' && horas !== 12) horasFinales = horas + 12;
-      if (periodo === 'AM' && horas === 12) horasFinales = 0;
-      
-      const horarioTest = new Date(inicio);
-      horarioTest.setHours(horasFinales, minutos, 0, 0);
-      const horarioFinTest = new Date(horarioTest);
-      horarioFinTest.setMinutes(horarioFinTest.getMinutes() + tiempoServicio);
-      
-      if (!(horarioFinTest <= inicio || horarioTest >= fin)) {
-        horariosOcupados.push(horario);
-      }
-    }
-  }
-  
-  return horariosDelDia.filter(h => !horariosOcupados.includes(h));
-}
-
-// ============== FLUJO DEL BOT ==============
-
 async function procesarMensaje(mensaje, senderId) {
   const textoNorm = normalizar(mensaje);
   
@@ -232,17 +179,15 @@ async function procesarMensaje(mensaje, senderId) {
   if (sesion.paso === 0) {
     if (['agendar', 'agendar cita', 'cita', 'reserva'].some(p => textoNorm.includes(p))) {
       sesion.paso = 1;
-      let menuRazas = '¡Perfecto! 📋 ¿Qué tamaño tiene tu mascota?\n\n';
-      Object.entries(RAZAS_DATA).forEach(([key, data]) => {
-        menuRazas += `${data.nombre}\n  Ejemplos: ${data.ejemplos.join(', ')}\n\n`;
-      });
-      return { response: menuRazas };
+      return {
+        response: '¡Perfecto! 📋\n\n¿Es un perro o un gato?\n\n1️⃣ Perro\n2️⃣ Gato'
+      };
     } else if (['precio', 'precios'].some(p => textoNorm.includes(p))) {
       let respuesta = '💰 PRECIOS - WUAU PET SPA:\n\n';
       Object.entries(RAZAS_DATA).forEach(([key, data]) => {
         respuesta += `${data.nombre}:\n`;
         Object.entries(data.servicios).forEach(([servicio, info]) => {
-          respuesta += `  • ${servicio}: $${info.precio} (${info.tiempo} min)\n`;
+          respuesta += `  • ${servicio}: $${info.precio}\n`;
         });
         respuesta += '\n';
       });
@@ -254,15 +199,33 @@ async function procesarMensaje(mensaje, senderId) {
     }
   }
 
-  // PASO 1: Seleccionar tamaño
+  // PASO 1: Tipo de mascota (Perro o Gato)
   if (sesion.paso === 1) {
+    if (textoNorm.includes('perro') || textoNorm === '1') {
+      sesion.tipo = 'Perro';
+      sesion.paso = 2;
+      return {
+        response: '¡Perfecto! Perro 🐕\n\n¿Qué tamaño tiene?\n\n1️⃣ XS (Pequeño)\n2️⃣ S (Pequeño-Mediano)\n3️⃣ M (Mediano)\n4️⃣ L (Grande)\n5️⃣ XL (Muy Grande)'
+      };
+    } else if (textoNorm.includes('gato') || textoNorm === '2') {
+      sesion.tipo = 'Gato';
+      sesion.paso = 2;
+      return {
+        response: '¡Perfecto! Gato 🐱\n\n¿Qué tamaño tiene?\n\n1️⃣ XS (Pequeño)\n2️⃣ S (Pequeño-Mediano)\n3️⃣ M (Mediano)\n4️⃣ L (Grande)\n5️⃣ XL (Muy Grande)'
+      };
+    }
+    return { response: 'Por favor, elige: 1️⃣ Perro o 2️⃣ Gato' };
+  }
+
+  // PASO 2: Seleccionar tamaño
+  if (sesion.paso === 2) {
     const tamanioKeys = Object.keys(RAZAS_DATA);
-    const tamanioEncontrado = tamanioKeys.find(key => textoNorm.includes(key) || textoNorm.includes(normalizar(RAZAS_DATA[key].nombre)));
+    const tamanioEncontrado = tamanioKeys.find(key => textoNorm.includes(key) || textoNorm === String(tamanioKeys.indexOf(key) + 1));
     
     if (tamanioEncontrado) {
       sesion.tamanio = tamanioEncontrado;
       sesion.tamanioNombre = RAZAS_DATA[tamanioEncontrado].nombre;
-      sesion.paso = 2;
+      sesion.paso = 3;
       
       let menuServicios = `Perfecto, ${sesion.tamanioNombre}. 🐾\n\n¿Qué servicio necesitas?\n\n`;
       Object.entries(RAZAS_DATA[tamanioEncontrado].servicios).forEach(([servicio, info], idx) => {
@@ -271,11 +234,11 @@ async function procesarMensaje(mensaje, senderId) {
       
       return { response: menuServicios };
     }
-    return { response: 'No entendí. Por favor, elige un tamaño: XS, S, M, L o XL.' };
+    return { response: 'Por favor, elige un tamaño: XS, S, M, L o XL' };
   }
 
-  // PASO 2: Seleccionar servicio
-  if (sesion.paso === 2) {
+  // PASO 3: Seleccionar servicio
+  if (sesion.paso === 3) {
     const serviciosDisponibles = Object.keys(RAZAS_DATA[sesion.tamanio].servicios);
     const servicioEncontrado = serviciosDisponibles.find(s => textoNorm.includes(normalizar(s)));
     
@@ -284,43 +247,39 @@ async function procesarMensaje(mensaje, senderId) {
       const info = RAZAS_DATA[sesion.tamanio].servicios[servicioEncontrado];
       sesion.precio = info.precio;
       sesion.tiempoServicio = info.tiempo;
-      sesion.paso = 3;
+      sesion.paso = 4;
       
       return {
         response: `Excelente. ${servicioEncontrado.toUpperCase()}\n💰 Precio: $${sesion.precio}\n⏱️ Duración: ${sesion.tiempoServicio} minutos\n\n¿Cuál es tu nombre?`
       };
     }
-    return { response: 'No entendí. Por favor, elige un servicio.' };
+    return { response: 'Por favor, elige un servicio.' };
   }
 
-  // PASO 3: Nombre cliente
-  if (sesion.paso === 3) {
+  // PASO 4-10: Datos personales y fecha/hora (igual que antes)
+  if (sesion.paso === 4) {
     sesion.cliente = mensaje;
-    sesion.paso = 4;
+    sesion.paso = 5;
     return { response: '¿Cuál es el nombre de tu mascota? 🐕🐱' };
   }
 
-  // PASO 4: Nombre mascota
-  if (sesion.paso === 4) {
+  if (sesion.paso === 5) {
     sesion.mascota = mensaje;
-    sesion.paso = 5;
+    sesion.paso = 6;
     return { response: '¿Cuál es tu número de teléfono?' };
   }
 
-  // PASO 5: Teléfono
-  if (sesion.paso === 5) {
+  if (sesion.paso === 6) {
     sesion.telefono = mensaje;
-    sesion.paso = 6;
-    
+    sesion.paso = 7;
     return {
       response: '📅 ¿Qué día prefieres? (Escribe MM/DD/YYYY)\n\nEJEMPLO: 08/17/2026'
     };
   }
 
-  // PASO 6: Fecha
-  if (sesion.paso === 6) {
+  if (sesion.paso === 7) {
     sesion.fecha = mensaje;
-    sesion.paso = 7;
+    sesion.paso = 8;
     
     const [mes, dia, año] = mensaje.split('/').map(Number);
     const fecha = new Date(año, mes - 1, dia);
@@ -338,13 +297,12 @@ async function procesarMensaje(mensaje, senderId) {
     };
   }
 
-  // PASO 7: Hora
-  if (sesion.paso === 7) {
+  if (sesion.paso === 8) {
     const horaEncontrada = sesion.horariosDisponibles.find(h => textoNorm.includes(normalizar(h)));
     if (horaEncontrada) {
       sesion.hora = horaEncontrada;
       sesion.raza = RAZAS_DATA[sesion.tamanio].nombre;
-      sesion.paso = 8;
+      sesion.paso = 9;
       
       try {
         await crearEventoEnCalendar(sesion);
@@ -352,6 +310,7 @@ async function procesarMensaje(mensaje, senderId) {
         let confirmacion = '✅ ¡¡¡CITA CONFIRMADA!!! 📋\n\n';
         confirmacion += `🐾 Mascota: ${sesion.mascota}\n`;
         confirmacion += `👤 Cliente: ${sesion.cliente}\n`;
+        confirmacion += `🐕🐱 Tipo: ${sesion.tipo}\n`;
         confirmacion += `📏 Tamaño: ${sesion.tamanioNombre}\n`;
         confirmacion += `✂️ Servicio: ${sesion.servicio}\n`;
         confirmacion += `💰 Precio: $${sesion.precio}\n`;
@@ -368,20 +327,18 @@ async function procesarMensaje(mensaje, senderId) {
         return { response: `Error: ${error.message}. Intenta de nuevo.` };
       }
     }
-    return { response: 'No entendí. Por favor, selecciona una hora.' };
+    return { response: 'Por favor, selecciona una hora.' };
   }
 
   return { response: 'No entendí tu pregunta. ¿En qué puedo ayudarte?' };
 }
 
-// ============== RUTAS ==============
-
 app.get('/', (req, res) => {
   res.json({
     bot: '🐕🐱 WUAU PET SPA BOT v10',
-    version: '10.0.0',
-    status: 'LIVE con Sistema Avanzado por Raza',
-    features: ['Precios dinámicos', 'Disponibilidad inteligente', 'Tiempos por servicio', 'Google Calendar']
+    version: '10.0.1',
+    status: 'LIVE - Detecta Perro o Gato',
+    features: ['Perro/Gato', 'Precios dinámicos', 'Tiempos', 'Google Calendar']
   });
 });
 
@@ -412,19 +369,15 @@ app.post('/chat', async (req, res) => {
   }
 });
 
-// ============== INICIAR SERVIDOR ==============
-
 console.log(`
 ╔════════════════════════════════════════╗
-║  🐕🐱 WUAU PET SPA BOT v10              ║
-║  SISTEMA AVANZADO POR RAZA              ║
-║  Precios + Tiempos + Disponibilidad     ║
+║  🐕🐱 WUAU PET SPA BOT v10.1            ║
+║  PERRO o GATO + SISTEMA AVANZADO       ║
 ╚════════════════════════════════════════╝
 `);
 
 app.listen(PORT, () => {
   console.log(`✅ Bot LIVE en puerto ${PORT}`);
+  console.log(`🐕🐱 Detecta Perro o Gato`);
   console.log(`📅 Google Calendar conectado`);
-  console.log(`🐕 Razas system activo`);
-  console.log(`Server listening on port ${PORT}`);
 });
