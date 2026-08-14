@@ -1,12 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * 🐕🐱 WUAU PET SPA BOT v10.6 - VERSIÓN DEFINITIVA FINAL
- * ✨ Botones clickeables para tamaños, servicios, extras, fechas
- * ✨ 6 días próximos con día de semana + fecha
- * ✨ Opción de otra fecha personalizada
- * ✨ Reconocimiento de despedidas + pregunta cálida al final
- * ✨ Tono genuino como Lesly
+ * 🐕🐱 WUAU PET SPA BOT v10.8 - CON RECONOCIMIENTO DE PREGUNTAS
+ * ✨ Entiende preguntas en cualquier momento del flujo
+ * ✨ Responde sin interrumpir agendamiento
+ * ✨ Tamaño diferente por CADA mascota
  */
 
 const express = require('express');
@@ -83,7 +81,55 @@ function normalizar(texto) {
     .replace(/[^a-z0-9\s]/g, '');
 }
 
-// ⭐ GENERAR 6 DÍAS PRÓXIMOS
+// ⭐ DETECTAR Y RESPONDER PREGUNTAS
+function detectarPregunta(texto) {
+  const textoNorm = normalizar(texto);
+  
+  // Preguntas sobre precios
+  if (['precio', 'precios', 'cuanto cuesta', 'cuanto sale', 'valor', 'costo'].some(p => textoNorm.includes(p))) {
+    let respuesta = '💰 Nuestros precios varían según el tamaño y el servicio:\n\n';
+    respuesta += '📏 TAMAÑOS:\n';
+    Object.entries(TAMANIOS).forEach(([key, val]) => {
+      respuesta += `• ${val.nombre}: ${val.precio}\n`;
+    });
+    respuesta += '\n📋 Servicios principales:\n';
+    respuesta += '• Baño Completo 🛁\n• Limpieza de oídos 👂\n• Corte de uñas 🐾';
+    return respuesta;
+  }
+  
+  // Preguntas sobre servicios
+  if (['servicio', 'servicios', 'qué haces', 'que ofreces', 'que ofrecen', 'realizan'].some(p => textoNorm.includes(p))) {
+    let respuesta = 'Te cuento cuáles son nuestros servicios con mucho amor 💖:\n\n';
+    respuesta += '🛁 Baño Completo (incluye limpieza de oídos, despeje de huellas, despeje de bikini, secado)\n';
+    respuesta += '👂 Limpieza de oídos\n';
+    respuesta += '🐾 Corte de uñas\n\n';
+    respuesta += 'Además tenemos servicios extras especiales 💅:\n';
+    respuesta += '• Shampoo anti pulgas y garrapatas\n• Desenredo y recuperación de manto\n• Hidratación de manto\n• Hidratación de huellas';
+    return respuesta;
+  }
+  
+  // Preguntas sobre horarios
+  if (['horario', 'horarios', 'abierto', 'que hora', 'que horas', 'cuando atienden'].some(p => textoNorm.includes(p))) {
+    let respuesta = '⏰ NUESTROS HORARIOS:\n\n';
+    respuesta += '📅 Lunes a Jueves:\n• 9:00 AM\n• 11:00 AM\n• 3:00 PM\n\n';
+    respuesta += '📅 Viernes:\n• 8:30 AM\n• 10:00 AM\n• 2:00 PM\n\n';
+    respuesta += '📅 Sábado:\n• 8:00 AM\n• 10:00 AM\n• 12:00 PM\n• 2:00 PM\n• 4:00 PM';
+    return respuesta;
+  }
+  
+  // Preguntas sobre ubicación
+  if (['ubicacion', 'ubicación', 'donde', 'dirección', 'direccion', 'locacion'].some(p => textoNorm.includes(p))) {
+    return '📍 UBICACIÓN:\n3516 Drumore Dr\n\nVen a conocernos con tu mascota 🐾💕';
+  }
+  
+  // Preguntas sobre contacto o WhatsApp
+  if (['whatsapp', 'mensaje', 'contacto', 'llamar', 'teléfono', 'numero', 'número'].some(p => textoNorm.includes(p))) {
+    return '📱 CONTACTO:\nTeléfono/Zelle: 267-702-9312\n\nPuedes contactarme por teléfono o WhatsApp 💕';
+  }
+  
+  return null;
+}
+
 function generar6DiasSiguientes() {
   const hoy = new Date();
   const dias = [];
@@ -168,10 +214,9 @@ async function crearEventoEnCalendar(datos) {
     fechaFin.setMinutes(fechaFin.getMinutes() + datos.tiempoTotal);
 
     let descripcion = `Cliente: ${datos.cliente}\nTeléfono: ${datos.telefono}\n`;
-    descripcion += `Mascota(s): ${datos.mascotas.join(', ')}\n`;
+    descripcion += `Mascota(s): ${datos.mascotas.map((m, i) => `${m} (${datos.tamanios[i]})`).join(', ')}\n`;
     descripcion += `Cantidad: ${datos.cantidadMascotas}\n`;
     descripcion += `Raza(s): ${datos.razas.join(', ')}\n`;
-    descripcion += `Tamaño: ${datos.tamanio}\n`;
     descripcion += `Servicio: ${datos.servicioPrincipal}\n`;
     if (datos.serviciosExtras && datos.serviciosExtras.length > 0) {
       descripcion += `Extras: ${datos.serviciosExtras.join(', ')}\n`;
@@ -203,7 +248,6 @@ async function crearEventoEnCalendar(datos) {
   }
 }
 
-// ⭐ OBTENER DÍA DE SEMANA PARA MOSTRAR EN CONFIRMACIÓN
 function obtenerDiaSemana(fechaString) {
   const [mes, dia, año] = fechaString.split('/').map(Number);
   const fecha = new Date(año, mes - 1, dia);
@@ -220,6 +264,24 @@ async function procesarMensaje(mensaje, senderId) {
 
   const sesion = SESIONES[senderId];
 
+  // ⭐ PRIMERO: DETECTAR SI ES UNA PREGUNTA (en cualquier paso)
+  const respuestaPregunta = detectarPregunta(mensaje);
+  if (respuestaPregunta && sesion.paso > 0) {
+    // Responder la pregunta y luego repetir la pregunta actual
+    let respustaFinal = respuestaPregunta + '\n\n';
+    
+    // Volver a hacer la pregunta del paso actual
+    if (sesion.paso === 1) {
+      respustaFinal += '¿Tu mascota es un perro o un gato? 🐕🐱';
+    } else if (sesion.paso === 2) {
+      respustaFinal += `¿Cuál es la raza de tu ${sesion.tipo.toLowerCase()}?`;
+    } else if (sesion.paso === 3) {
+      respustaFinal += '¿Cuántas mascotas son las que traerás a la cita?';
+    }
+    
+    return { response: respustaFinal };
+  }
+
   // ⭐ RECONOCER DESPEDIDAS EN CUALQUIER MOMENTO
   if (['gracias', 'listo', 'eso es todo', 'adios', 'bye', 'chao', 'hasta luego', 'nos vemos'].some(p => textoNorm.includes(p)) && sesion.paso > 0) {
     delete SESIONES[senderId];
@@ -228,27 +290,14 @@ async function procesarMensaje(mensaje, senderId) {
     };
   }
 
-  // PASO 0: Menú principal
   if (sesion.paso === 0) {
     if (['agendar', 'agendar cita', 'cita', 'reserva', 'quiero'].some(p => textoNorm.includes(p))) {
       sesion.paso = 1;
       return {
         response: '¡Hola! 👋 Qué emoción que quieras agendar con nosotros 💕\n\n¿Tu mascota es un perro o un gato? 🐕🐱'
       };
-    } else if (['precio', 'precios', 'cuanto cuesta'].some(p => textoNorm.includes(p))) {
-      let respuesta = '💰 Nuestros precios varían según el tamaño y el servicio:\n\n';
-      respuesta += '📏 TAMAÑOS:\n';
-      Object.entries(TAMANIOS).forEach(([key, val]) => {
-        respuesta += `• ${val.nombre}: ${val.precio}\n`;
-      });
-      return { response: respuesta };
-    } else if (['servicio', 'servicios', 'qué haces', 'que ofreces'].some(p => textoNorm.includes(p))) {
-      let respuesta = 'Te cuento cuáles son nuestros servicios con mucho amor 💖:\n\n';
-      respuesta += '🛁 Baño Completo (incluye limpieza de oídos, despeje de huellas, despeje de bikini, secado)\n';
-      respuesta += '👂 Limpieza de oídos\n';
-      respuesta += '🐾 Corte de uñas\n\n';
-      respuesta += 'Además tenemos servicios extras especiales 💅\n\n¿Quieres agendar? 🐾';
-      return { response: respuesta };
+    } else if (respuestaPregunta) {
+      return { response: respuestaPregunta };
     } else {
       return {
         response: '¡Hola! 👋 Soy Lesly de WUAU PET SPA 🐕🐱✂️\n\n¿En qué te puedo ayudar?\n\n1️⃣ Agendar cita\n2️⃣ Ver precios\n3️⃣ Conocer nuestros servicios'
@@ -256,7 +305,6 @@ async function procesarMensaje(mensaje, senderId) {
     }
   }
 
-  // PASO 1: Tipo de mascota
   if (sesion.paso === 1) {
     if (textoNorm.includes('perro') || textoNorm === '1') {
       sesion.tipo = 'Perro';
@@ -274,7 +322,6 @@ async function procesarMensaje(mensaje, senderId) {
     return { response: 'Cuéntame, ¿es un perro o un gato? 🐕🐱' };
   }
 
-  // PASO 2: Raza
   if (sesion.paso === 2) {
     sesion.raza = mensaje;
     sesion.paso = 3;
@@ -283,12 +330,12 @@ async function procesarMensaje(mensaje, senderId) {
     };
   }
 
-  // PASO 3: Cantidad de mascotas
   if (sesion.paso === 3) {
     const cantidad = parseInt(textoNorm.match(/\d+/)?.[0] || mensaje.trim());
     if (!isNaN(cantidad) && cantidad > 0) {
       sesion.cantidadMascotas = cantidad;
       sesion.mascotas = [];
+      sesion.tamanios = [];
       sesion.razas = [sesion.raza];
       sesion.paso = 4;
       
@@ -298,15 +345,61 @@ async function procesarMensaje(mensaje, senderId) {
         };
       } else {
         return {
-          response: `¡Genial! ${cantidad} mascotas 🐾\n\nRecuerda que si son 2 o más, el tiempo del servicio se duplicará ⏱️\n\n¿Cuál es el tamaño de tus mascotas?\n\n1️⃣ Mini\n2️⃣ Pequeño\n3️⃣ Mediano\n4️⃣ Grande\n5️⃣ Extra Grande`
+          response: `¡Genial! ${cantidad} mascotas 🐾\n\nRecuerda que si son 2 o más, el tiempo del servicio se duplicará ⏱️\n\n¿Cuál es el nombre de la primera mascota?`
         };
       }
     }
     return { response: 'Cuéntame cuántas mascotas son 🐾' };
   }
 
-  // PASO 4: Tamaño
-  if (sesion.paso === 4) {
+  if (sesion.paso === 4 && sesion.cantidadMascotas > 1) {
+    if (sesion.mascotas.length < sesion.cantidadMascotas) {
+      sesion.mascotas.push(mensaje);
+      
+      if (sesion.mascotas.length < sesion.cantidadMascotas) {
+        return {
+          response: `¡Qué lindo nombre! 💕\n\n¿Cuál es el nombre de la siguiente mascota?`
+        };
+      } else {
+        sesion.paso = 4.5;
+        sesion.indexMascota = 0;
+        return {
+          response: `¡Hermoso! ${sesion.mascotas.join(' y ')} van a estar lindos aquí 🐾\n\n¿Cuál es el tamaño de ${sesion.mascotas[0]}?\n\n1️⃣ Mini\n2️⃣ Pequeño\n3️⃣ Mediano\n4️⃣ Grande\n5️⃣ Extra Grande`
+        };
+      }
+    }
+  }
+
+  if (sesion.paso === 4.5) {
+    const tamanios = ['mini', 'pequeno', 'mediano', 'grande', 'extragrande'];
+    const tamanioEncontrado = tamanios.find(t => {
+      if (textoNorm.includes(t)) return true;
+      if (textoNorm.includes(t.replace('o', ''))) return true;
+      if (t === 'pequeno' && textoNorm.includes('peque')) return true;
+      if (t === 'extragrande' && (textoNorm.includes('extra') || textoNorm.includes('muy'))) return true;
+      if (t === 'mediano' && textoNorm.includes('medio')) return true;
+      return false;
+    });
+    
+    if (tamanioEncontrado) {
+      sesion.tamanios.push(TAMANIOS[tamanioEncontrado].nombre);
+      sesion.indexMascota++;
+      
+      if (sesion.indexMascota < sesion.cantidadMascotas) {
+        return {
+          response: `¡Perfecto! 🐾\n\n¿Cuál es el tamaño de ${sesion.mascotas[sesion.indexMascota]}?\n\n1️⃣ Mini\n2️⃣ Pequeño\n3️⃣ Mediano\n4️⃣ Grande\n5️⃣ Extra Grande`
+        };
+      } else {
+        sesion.paso = 6;
+        return {
+          response: `¡Excelente! Todos los tamaños confirmados ✨\n\n¿Cuál es tu nombre?`
+        };
+      }
+    }
+    return { response: 'Cuéntame cuál es el tamaño 🐾' };
+  }
+
+  if (sesion.paso === 4 && sesion.cantidadMascotas === 1) {
     const tamanios = ['mini', 'pequeno', 'mediano', 'grande', 'extragrande'];
     const tamanioEncontrado = tamanios.find(t => {
       if (textoNorm.includes(t)) return true;
@@ -320,6 +413,7 @@ async function procesarMensaje(mensaje, senderId) {
     if (tamanioEncontrado) {
       sesion.tamanio = TAMANIOS[tamanioEncontrado].nombre;
       sesion.precioBase = TAMANIOS[tamanioEncontrado].precio;
+      sesion.tamanios = [sesion.tamanio];
       sesion.paso = 5;
       
       return {
@@ -329,32 +423,18 @@ async function procesarMensaje(mensaje, senderId) {
     return { response: 'Cuéntame cuál es el tamaño: Mini, Pequeño, Mediano, Grande o Extra Grande 🐾' };
   }
 
-  // PASO 5: Nombre mascota(s)
   if (sesion.paso === 5) {
-    if (sesion.mascotas.length < sesion.cantidadMascotas) {
-      sesion.mascotas.push(mensaje);
-      
-      if (sesion.mascotas.length < sesion.cantidadMascotas) {
-        return {
-          response: `¡Qué lindo nombre! 💕\n\n¿Cuál es el nombre de la siguiente mascota?`
-        };
-      } else {
-        sesion.paso = 6;
-        return {
-          response: `¡Hermoso! ${sesion.mascotas.join(' y ')} van a estar lindos aquí 🐾\n\n¿Cuál es tu nombre?`
-        };
-      }
-    }
+    sesion.mascotas.push(mensaje);
+    sesion.paso = 6;
+    return { response: `¡Qué lindo nombre! 💕\n\n¿Cuál es tu nombre?` };
   }
 
-  // PASO 6: Nombre cliente
   if (sesion.paso === 6) {
     sesion.cliente = mensaje;
     sesion.paso = 7;
     return { response: `Mucho gusto, ${sesion.cliente} 😊\n\n¿Cuál es tu número de teléfono?` };
   }
 
-  // PASO 7: Teléfono
   if (sesion.paso === 7) {
     sesion.telefono = mensaje;
     sesion.paso = 8;
@@ -364,7 +444,6 @@ async function procesarMensaje(mensaje, senderId) {
     };
   }
 
-  // PASO 8: Servicio principal
   if (sesion.paso === 8) {
     const servicios = ['baño completo', 'limpieza de oidos', 'corte de unas'];
     const servicioEncontrado = servicios.find(s => textoNorm.includes(normalizar(s)));
@@ -382,7 +461,6 @@ async function procesarMensaje(mensaje, senderId) {
     return { response: 'Cuéntame cuál servicio deseas 🐾' };
   }
 
-  // PASO 9: Servicios extras
   if (sesion.paso === 9) {
     sesion.serviciosExtras = [];
     
@@ -398,7 +476,6 @@ async function procesarMensaje(mensaje, senderId) {
       sesion.paso = 10;
     }
     
-    // ⭐ MOSTRAR 6 DÍAS CON DÍA DE SEMANA
     const diasDisponibles = generar6DiasSiguientes();
     let respuestaFecha = `Perfecto 💅 ¿Qué día te gustaría agendar?\n\n`;
     diasDisponibles.forEach((dia, idx) => {
@@ -411,19 +488,16 @@ async function procesarMensaje(mensaje, senderId) {
     return { response: respuestaFecha };
   }
 
-  // PASO 10: Fecha
   if (sesion.paso === 10) {
     let fechaSeleccionada = null;
     
-    // Verificar si seleccionó uno de los 6 días
     const opcionDia = parseInt(textoNorm.match(/\d+/)?.[0]);
     if (!isNaN(opcionDia) && opcionDia >= 1 && opcionDia <= 6) {
       fechaSeleccionada = sesion.diasDisponibles[opcionDia - 1].fecha;
     } else if (opcionDia === 7 || textoNorm.includes('otra')) {
-      sesion.paso = 10.5; // Sub-paso para pedir fecha personalizada
+      sesion.paso = 10.5;
       return { response: 'Claro 📅 Escribe la fecha que prefieras (MM/DD/YYYY)\n\nEjemplo: 09/05/2026' };
     } else if (mensaje.includes('/')) {
-      // Validar formato MM/DD/YYYY
       fechaSeleccionada = mensaje;
     }
     
@@ -450,7 +524,6 @@ async function procesarMensaje(mensaje, senderId) {
     return { response: 'Cuéntame qué día prefieres 🗓️' };
   }
 
-  // PASO 10.5: Fecha personalizada
   if (sesion.paso === 10.5) {
     if (mensaje.includes('/')) {
       sesion.fecha = mensaje;
@@ -475,14 +548,12 @@ async function procesarMensaje(mensaje, senderId) {
     return { response: 'Escribe la fecha en formato MM/DD/YYYY 📅' };
   }
 
-  // PASO 11: Hora
   if (sesion.paso === 11) {
     const horaEncontrada = sesion.horariosDisponibles.find(h => textoNorm.includes(normalizar(h)));
     if (horaEncontrada) {
       sesion.hora = horaEncontrada;
       sesion.paso = 12;
       
-      // Verificar disponibilidad
       const disponible = await obtenerHorariosDisponibles(sesion.fecha, [horaEncontrada], sesion.tiempoServicio);
       
       if (disponible.length === 0) {
@@ -497,31 +568,32 @@ async function procesarMensaje(mensaje, senderId) {
         sesion.tiempoTotal = sesion.tiempoServicio + (sesion.serviciosExtras.length * 15);
         await crearEventoEnCalendar(sesion);
         
-        // ⭐ MOSTRAR CON DÍA DE SEMANA
         const diaSemana = obtenerDiaSemana(sesion.fecha);
         
         let confirmacion = '✅ ¡¡¡CITA CONFIRMADA!!! 💕\n\n';
-        confirmacion += `🐾 Mascota(s): ${sesion.mascotas.join(', ')}\n`;
+        confirmacion += `🐾 Mascota(s): ${sesion.mascotas.map((m, i) => `${m} (${sesion.tamanios[i]})`).join(', ')}\n`;
         confirmacion += `👤 Cliente: ${sesion.cliente}\n`;
-        confirmacion += `📏 Tamaño: ${sesion.tamanio}\n`;
         confirmacion += `✂️ Servicio: ${sesion.servicioPrincipal}\n`;
         if (sesion.serviciosExtras.length > 0) {
           confirmacion += `➕ Extras: ${sesion.serviciosExtras.join(', ')}\n`;
         }
-        confirmacion += `💰 Precio: ${sesion.precioBase}\n`;
         confirmacion += `📅 Fecha: ${diaSemana} ${sesion.fecha}\n`;
         confirmacion += `🕐 Hora: ${sesion.hora}\n\n`;
         confirmacion += `💛 IMPORTANTE - DEPÓSITO REQUERIDO: $30\n`;
         confirmacion += `📲 Pago por Zelle al: 267-702-9312\n`;
         confirmacion += `Envía el soporte de pago para confirmar la cita ✅\n\n`;
         confirmacion += `⏰ Duración: ${Math.ceil(sesion.tiempoTotal / 60)} hora(s)\n\n`;
-        confirmacion += `¡Gracias por confiar en WUAU PET SPA! 🐕🐱💖\nTe esperamos con mucho amor y paciencia 🐾✨`;
+        confirmacion += `¡Gracias por confiar en WUAU PET SPA! 🐕🐱💖\nTe esperamos con mucho amor y paciencia 🐾✨\n\n`;
+        confirmacion += `Si tienes alguna pregunta o detalle, deja tu mensaje y me pondré en contacto contigo en la brevedad 💕`;
         
         delete SESIONES[senderId];
         
         return { response: confirmacion };
       } catch (error) {
-        return { response: `Oops, algo pasó 😅\n\nPero no te preocupes, puedes llamarme al 267-702-9312` };
+        console.error('Calendar error:', error);
+        return { 
+          response: `Si tienes alguna pregunta o detalle, deja tu mensaje y me pondré en contacto contigo en la brevedad 💕\n\nContacta a Lesly: 267-702-9312`
+        };
       }
     }
     return { response: 'Cuéntame la hora que prefieres 🕐' };
@@ -532,19 +604,18 @@ async function procesarMensaje(mensaje, senderId) {
 
 app.get('/', (req, res) => {
   res.json({
-    bot: '🐕🐱 WUAU PET SPA BOT v10.6',
-    version: '10.6.0',
-    status: 'LIVE - Versión FINAL DEFINITIVA de Lesly',
+    bot: '🐕🐱 WUAU PET SPA BOT v10.8',
+    version: '10.8.0',
+    status: 'LIVE - Con Reconocimiento de Preguntas',
     groomer: 'Lesly Arias',
     features: [
-      'Botones clickeables para todos los pasos',
-      '6 días próximos con día de semana + fecha',
-      'Opción "Otra fecha" personalizada',
-      'Reconocimiento de despedidas',
-      'Pregunta cálida al final',
-      'Múltiples mascotas por cita',
-      'Horarios dinámicos',
-      'Tono genuino como Lesly'
+      'Entiende preguntas en cualquier momento',
+      'Responde sin interrumpir agendamiento',
+      'Tamaño diferente por CADA mascota',
+      'Botones clickeables',
+      '6 días con día de semana + fecha',
+      'Mensaje personalizado de Lesly',
+      'Listo para WhatsApp + Web'
     ]
   });
 });
@@ -578,15 +649,15 @@ app.post('/chat', async (req, res) => {
 
 console.log(`
 ╔════════════════════════════════════════╗
-║  🐕🐱 WUAU PET SPA BOT v10.6 FINAL     ║
-║  ✨ BOTONES CLICKEABLES                ║
-║  ✨ 6 DÍAS + OPCIÓN PERSONALIZADA      ║
-║  ✨ RECONOCE DESPEDIDAS                ║
-║  ✨ CON TODA LA MAGIA DE LESLY 💖     ║
+║  🐕🐱 WUAU PET SPA BOT v10.8 FINAL     ║
+║  ✨ ENTIENDE PREGUNTAS SIEMPRE         ║
+║  ✨ TAMAÑO POR MASCOTA                 ║
+║  ✨ LISTO PARA WHATSAPP + WEB          ║
+║  ✨ MENSAJE PERSONALIZADO              ║
 ╚════════════════════════════════════════╝
 `);
 
 app.listen(PORT, () => {
   console.log(`✅ Bot LIVE en puerto ${PORT}`);
-  console.log(`💖 ¡Lista v10.6 DEFINITIVA!`);
+  console.log(`💖 ¡v10.8 FINAL CON PREGUNTAS!`);
 });
