@@ -15,7 +15,27 @@ require('dotenv').config();
 const { google } = require('googleapis');
 
 const app = express();
-app.use(cors());
+
+// ⭐ CORS configurado para aceptar requests desde cualquier origen
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type']
+}));
+
+// ⭐ Agregar headers CORS manualmente
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  
+  next();
+});
+
 app.use(bodyParser.json());
 
 const PORT = process.env.PORT || 3000;
