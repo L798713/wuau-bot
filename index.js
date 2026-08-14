@@ -88,7 +88,7 @@ async function procesarMensaje(mensaje, senderId) {
       sesion.paso = 2;
       return { response: '¡Qué bonito! 🐱 ¿Cuál es la raza?' };
     }
-    return { response: '¿Perro o gato? 🐕🐱' };
+    return { response: `¿Tu mascota es?\n\n1️⃣ Perro 🐕\n2️⃣ Gato 🐱` };
   }
 
   if (sesion.paso === 2) {
@@ -126,7 +126,7 @@ async function procesarMensaje(mensaje, senderId) {
       sesion.paso = 6;
       return { response: `¡Perfecto! 🐾\n\n¿Tu nombre?` };
     }
-    return { response: 'Cuéntame el tamaño 🐾' };
+    return { response: `Cuéntame el tamaño de ${sesion.mascotas[0]}?\n\n1️⃣ Mini\n2️⃣ Pequeño\n3️⃣ Mediano\n4️⃣ Grande\n5️⃣ Extra Grande` };
   }
 
   if (sesion.paso === 6) {
@@ -145,7 +145,7 @@ async function procesarMensaje(mensaje, senderId) {
     if (textoNorm.includes('baño')) sesion.servicio = 'Baño Completo 🛁';
     else if (textoNorm.includes('limpieza')) sesion.servicio = 'Limpieza oídos 👂';
     else if (textoNorm.includes('corte')) sesion.servicio = 'Corte uñas 🐾';
-    else return { response: 'Cuéntame el servicio 🐾' };
+    else return { response: `¿Servicio?\n\n1️⃣ Baño Completo 🛁\n2️⃣ Limpieza oídos 👂\n3️⃣ Corte uñas 🐾` };
     
     sesion.paso = 9;
     return { response: `¡Excelente! ${sesion.servicio} ✨\n\n¿Extras?\n\n1️⃣ Shampoo antipulgas\n2️⃣ Desenredo\n3️⃣ Ninguno` };
@@ -167,10 +167,10 @@ async function procesarMensaje(mensaje, senderId) {
     if (encontrado) {
       sesion.dia = encontrado;
       sesion.paso = 11;
-      const horas = HORARIOS[encontrado].map((h, i) => `${i+1}️⃣ ${h}`).join(' | ');
-      return { response: `¡${encontrado.charAt(0).toUpperCase() + encontrado.slice(1)}!\n\n¿Hora?\n\n${horas}` };
+      const horas = HORARIOS[encontrado].map((h, i) => `${i+1}️⃣ ${h}`).join('\n');
+      return { response: `¡${encontrado.charAt(0).toUpperCase() + encontrado.slice(1)}! 📅\n\n¿Hora?\n\n${horas}` };
     }
-    return { response: 'Cuéntame el día 📅' };
+    return { response: `¿Qué día?\n\n1️⃣ Lunes 08/17\n2️⃣ Martes 08/18\n3️⃣ Miércoles 08/19\n4️⃣ Jueves 08/20\n5️⃣ Viernes 08/21\n6️⃣ Sábado 08/22` };
   }
 
   if (sesion.paso === 11) {
