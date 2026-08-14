@@ -12,7 +12,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
@@ -39,7 +39,6 @@
             color: white;
             padding: 20px;
             text-align: center;
-            border-radius: 30px 30px 0 0;
         }
 
         .header h1 {
@@ -60,6 +59,7 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
+            background: #f9f9f9;
         }
 
         .message {
@@ -97,8 +97,9 @@
         }
 
         .message.bot .message-content {
-            background: #f0f0f0;
+            background: white;
             color: #333;
+            border: 1px solid #eee;
             border-bottom-left-radius: 4px;
         }
 
@@ -106,6 +107,15 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border-bottom-right-radius: 4px;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border-left: 4px solid #c33;
+            font-size: 14px;
         }
 
         .button-group {
@@ -143,7 +153,6 @@
             padding: 15px 20px;
             background: white;
             border-top: 1px solid #eee;
-            border-radius: 0 0 30px 30px;
         }
 
         #messageInput {
@@ -217,23 +226,23 @@
             }
         }
 
-        /* Scroll personalizado */
+        .status {
+            font-size: 12px;
+            color: #999;
+            padding: 5px 0;
+        }
+
         .chat-container::-webkit-scrollbar {
             width: 6px;
         }
 
         .chat-container::-webkit-scrollbar-track {
             background: #f1f1f1;
-            border-radius: 10px;
         }
 
         .chat-container::-webkit-scrollbar-thumb {
             background: #667eea;
             border-radius: 10px;
-        }
-
-        .chat-container::-webkit-scrollbar-thumb:hover {
-            background: #764ba2;
         }
     </style>
 </head>
@@ -245,11 +254,7 @@
         </div>
 
         <div class="chat-container" id="chatContainer">
-            <div class="message bot">
-                <div class="message-content">
-                    ¡Hola! 👋 Soy Lesly de WUAU PET SPA 🐕🐱✂️<br><br>¿En qué te puedo ayudar?
-                </div>
-            </div>
+            <div class="status" style="text-align: center; color: #999;">Conectando con el bot...</div>
         </div>
 
         <div class="input-container">
@@ -258,8 +263,9 @@
                 id="messageInput" 
                 placeholder="O escribe aquí..." 
                 autocomplete="off"
+                disabled
             >
-            <button id="sendButton">➤</button>
+            <button id="sendButton" disabled>➤</button>
         </div>
     </div>
 
@@ -270,18 +276,50 @@
         const sendButton = document.getElementById('sendButton');
         
         let sessionId = 'user_' + Date.now();
+        let botListo = false;
         let esperandoRespuesta = false;
 
-        // Enviar mensaje al presionar Enter
+        // Verificar conexión con bot al cargar
+        async function verificarBot() {
+            try {
+                console.log('Verificando bot en:', BOT_URL);
+                const respuesta = await fetch(BOT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: 'hola',
+                        sender: sessionId
+                    })
+                });
+
+                if (respuesta.ok) {
+                    botListo = true;
+                    mostrarMensajeBot('¡Bot conectado! Escribe "agendar" para comenzar o elige una opción.');
+                    mostrarOpciones(['1️⃣ Agendar cita', '2️⃣ Ver precios', '3️⃣ Conocer servicios']);
+                    messageInput.disabled = false;
+                    sendButton.disabled = false;
+                    messageInput.focus();
+                } else {
+                    throw new Error('Bot no respondió correctamente');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                chatContainer.innerHTML = '';
+                mostrarError('⚠️ No se pudo conectar con el bot. Asegúrate de que esté en línea.');
+                mostrarError('Bot URL: ' + BOT_URL);
+                mostrarMensajeBot('Si el error persiste, contacta a Lesly: 267-702-9312');
+            }
+        }
+
+        // Enviar mensaje
         messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !esperandoRespuesta) {
+            if (e.key === 'Enter' && !esperandoRespuesta && botListo) {
                 enviarMensaje();
             }
         });
 
-        // Enviar mensaje al clickear botón
         sendButton.addEventListener('click', () => {
-            if (!esperandoRespuesta) {
+            if (!esperandoRespuesta && botListo) {
                 enviarMensaje();
             }
         });
@@ -291,20 +329,15 @@
             
             if (!mensaje) return;
 
-            // Mostrar mensaje del usuario
-            mostrarMensaje(mensaje, 'user');
+            mostrarMensajeUsuario(mensaje);
             messageInput.value = '';
             esperandoRespuesta = true;
-
-            // Mostrar indicador de carga
             mostrarCarga();
 
             try {
                 const respuesta = await fetch(BOT_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         message: mensaje,
                         sender: sessionId
@@ -312,33 +345,28 @@
                 });
 
                 const data = await respuesta.json();
-                
-                // Eliminar indicador de carga
                 eliminarCarga();
 
                 if (data.success) {
-                    // Procesar respuesta del bot
                     procesarRespuestaBot(data.response);
                 } else {
-                    mostrarMensaje('Error al conectar con el bot', 'bot');
+                    mostrarError('Error: ' + (data.error || 'Respuesta inválida'));
                 }
             } catch (error) {
                 console.error('Error:', error);
                 eliminarCarga();
-                mostrarMensaje('Error de conexión. Intenta de nuevo.', 'bot');
+                mostrarError('Error de conexión: ' + error.message);
             }
 
             esperandoRespuesta = false;
         }
 
         function procesarRespuestaBot(respuesta) {
-            // Separar texto de opciones
             const lineas = respuesta.split('\n');
             let textoRespuesta = '';
             let opciones = [];
 
             for (let linea of lineas) {
-                // Detectar líneas con opciones (1️⃣, 2️⃣, etc)
                 if (/^[0-9]️⃣|^[1-9]\)|^[1-9]\.|^[1-9]\s/.test(linea.trim())) {
                     opciones.push(linea.trim());
                 } else if (linea.trim()) {
@@ -346,20 +374,18 @@
                 }
             }
 
-            // Mostrar texto de respuesta
             if (textoRespuesta.trim()) {
-                mostrarMensaje(textoRespuesta.trim(), 'bot');
+                mostrarMensajeBot(textoRespuesta.trim());
             }
 
-            // Mostrar opciones como botones
             if (opciones.length > 0) {
                 mostrarOpciones(opciones);
             }
         }
 
-        function mostrarMensaje(texto, tipo) {
+        function mostrarMensajeBot(texto) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${tipo}`;
+            messageDiv.className = 'message bot';
 
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
@@ -368,7 +394,22 @@
             messageDiv.appendChild(contentDiv);
             chatContainer.appendChild(messageDiv);
 
-            // Scroll al final
+            setTimeout(() => {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 0);
+        }
+
+        function mostrarMensajeUsuario(texto) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user';
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = texto;
+            
+            messageDiv.appendChild(contentDiv);
+            chatContainer.appendChild(messageDiv);
+
             setTimeout(() => {
                 chatContainer.scrollTop = chatContainer.scrollHeight;
             }, 0);
@@ -379,11 +420,10 @@
             buttonGroup.className = 'button-group';
 
             for (let opcion of opciones) {
-                // Limpiar la opción (remover emojis de números)
                 let textoLimpio = opcion
-                    .replace(/^[0-9]️⃣\s*/, '') // Remover emojis de números
-                    .replace(/^[1-9]\)\s*/, '')  // Remover números con paréntesis
-                    .replace(/^[1-9]\.\s*/, '')  // Remover números con punto
+                    .replace(/^[0-9]️⃣\s*/, '')
+                    .replace(/^[1-9]\)\s*/, '')
+                    .replace(/^[1-9]\.\s*/, '')
                     .trim();
 
                 const button = document.createElement('button');
@@ -391,11 +431,9 @@
                 button.textContent = textoLimpio;
 
                 button.addEventListener('click', () => {
-                    // Extraer el número de la opción original
                     const numeroMatch = opcion.match(/^[0-9]|^[1-9]/);
                     const numero = numeroMatch ? numeroMatch[0] : textoLimpio;
                     
-                    // Enviar el número o el texto
                     messageInput.value = numero;
                     enviarMensaje();
                 });
@@ -405,7 +443,6 @@
 
             chatContainer.appendChild(buttonGroup);
 
-            // Scroll al final
             setTimeout(() => {
                 chatContainer.scrollTop = chatContainer.scrollHeight;
             }, 0);
@@ -430,13 +467,22 @@
 
         function eliminarCarga() {
             const carga = document.getElementById('cargaIndicador');
-            if (carga) {
-                carga.remove();
-            }
+            if (carga) carga.remove();
         }
 
-        // Focus en input al cargar
-        messageInput.focus();
+        function mostrarError(texto) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = texto;
+            chatContainer.appendChild(errorDiv);
+
+            setTimeout(() => {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 0);
+        }
+
+        // Iniciar verificación
+        verificarBot();
     </script>
 </body>
 </html>
