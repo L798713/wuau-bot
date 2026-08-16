@@ -38,6 +38,15 @@ const HORARIOS = {
   'sabado': ['8:00 AM', '10:00 AM', '12:00 PM', '2:00 PM', '4:00 PM']
 };
 
+const FECHAS = {
+  'lunes': '20 de agosto',
+  'martes': '21 de agosto',
+  'miercoles': '22 de agosto',
+  'jueves': '23 de agosto',
+  'viernes': '24 de agosto',
+  'sabado': '25 de agosto'
+};
+
 const SESIONES = {};
 
 function normalizar(texto) {
@@ -95,9 +104,7 @@ async function procesar(mensaje, senderId) {
   }
 
   if (sesion.paso === 5) {
-    const diaLower = texto.toLowerCase();
     const diasValidos = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
-    
     let diaEncontrado = null;
     for (let d of diasValidos) {
       if (texto.includes(d)) {
@@ -111,9 +118,10 @@ async function procesar(mensaje, senderId) {
     }
     
     sesion.dia = diaEncontrado;
+    const fecha = FECHAS[diaEncontrado];
     const horas = HORARIOS[diaEncontrado].join(', ');
     sesion.paso = 6;
-    return { response: `¡Excelente! ${diaEncontrado}\n\nHorarios disponibles:\n${horas}\n¿Qué hora te viene bien?` };
+    return { response: `¡Excelente! ${diaEncontrado} ${fecha}\n\nHorarios disponibles:\n${horas}\n¿Qué hora te viene bien?` };
   }
 
   if (sesion.paso === 6) {
@@ -131,7 +139,7 @@ async function procesar(mensaje, senderId) {
   if (sesion.paso === 8) {
     sesion.telefono = mensaje;
     sesion.paso = 9;
-    return { response: `¿Confirmamos la cita?\n\n📅 ${sesion.dia} - ${sesion.hora}\n🐾 ${sesion.cantidad} ${sesion.tipo} ${sesion.raza} (${sesion.tamanio})\n👤 ${sesion.nombre}\n📞 ${sesion.telefono}\n\nEscribe "confirmar" para agendar` };
+    return { response: `¿Confirmamos la cita?\n\n📅 ${sesion.dia} ${FECHAS[sesion.dia]} - ${sesion.hora}\n🐾 ${sesion.cantidad} ${sesion.tipo} ${sesion.raza} (${sesion.tamanio})\n👤 ${sesion.nombre}\n📞 ${sesion.telefono}\n\nEscribe "confirmar" para agendar` };
   }
 
   if (sesion.paso === 9) {
@@ -152,7 +160,7 @@ async function procesar(mensaje, senderId) {
       
       sesion.paso = 0;
       return { 
-        response: `¡Perfecto! ✅\n\nTu cita está confirmada:\n📅 ${sesion.dia} - ${sesion.hora}\n💰 Depósito: $30 (Zelle: 267-702-9312)\n📞 Confirmación: 267-702-9312\n\n¡Gracias por confiar en WUAU PET SPA! 🐕🐱💕` 
+        response: `¡Perfecto! ✅\n\nTu cita está confirmada:\n📅 ${sesion.dia} ${FECHAS[sesion.dia]} - ${sesion.hora}\n💰 Depósito: $30 (Zelle: 267-702-9312)\n📞 Confirmación: 267-702-9312\n\n¡Gracias por confiar en WUAU PET SPA! 🐕🐱💕` 
       };
     }
     return { response: 'Por favor confirma escribiendo "confirmar"' };
@@ -164,11 +172,9 @@ async function procesar(mensaje, senderId) {
 app.post('/chat', async (req, res) => {
   try {
     const { message, sender } = req.body;
-    
     if (!message || !sender) {
       return res.status(400).json({ success: false, error: 'Faltan datos' });
     }
-
     const resultado = await procesar(message, sender);
     return res.json({ success: true, response: resultado.response });
   } catch (err) {
