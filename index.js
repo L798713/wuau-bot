@@ -56,7 +56,7 @@ async function procesar(mensaje, senderId) {
   if (sesion.paso === 0) {
     if (texto.includes('agendar') || texto.includes('cita')) {
       sesion.paso = 1;
-      return { response: '¡Hola! 👋 Qué emoción que quieras agendar 💕\n¿Tu mascota es un perro o un gato? 🐕🐱' };
+      return { response: '¡Hola! 👋 Qué emoción que quieras agendar 💕\n¿Tu mascota es un perro o un gato?' };
     }
     return { response: '¡Hola! 👋 Soy Lesly de WUAU PET SPA 🐕🐱\n¿Quieres agendar una cita?' };
   }
@@ -65,12 +65,12 @@ async function procesar(mensaje, senderId) {
     if (texto.includes('perro')) {
       sesion.tipo = 'Perro';
       sesion.paso = 2;
-      return { response: '¡Perfecto! 🐕 ¿Cuál es la raza?' };
+      return { response: '¡Perfecto! 🐕\n¿Cuál es la raza?' };
     }
     if (texto.includes('gato')) {
       sesion.tipo = 'Gato';
       sesion.paso = 2;
-      return { response: '¡Qué bonito! 🐱 ¿Cuál es la raza?' };
+      return { response: '¡Qué bonito! 🐱\n¿Cuál es la raza?' };
     }
     return { response: '¿Es un perro 🐕 o un gato 🐱?' };
   }
@@ -84,21 +84,36 @@ async function procesar(mensaje, senderId) {
   if (sesion.paso === 3) {
     const cantidad = parseInt(mensaje) || 1;
     sesion.cantidad = cantidad;
-    sesion.mascotas = [];
     sesion.paso = 4;
-    return { response: `¡${cantidad} mascota(s)! 🐾\n¿Cuál es el tamaño de blade?` };
+    return { response: `¡${cantidad} mascota(s)! 🐾\n¿Cuál es el tamaño?` };
   }
 
   if (sesion.paso === 4) {
     sesion.tamanio = mensaje;
     sesion.paso = 5;
-    return { response: `Perfecto! ¿Cuál es el día que prefieres?` };
+    return { response: `Perfecto! Disponibilidad:\nLunes, Martes, Miércoles, Jueves, Viernes, Sábado\n¿Cuál día prefieres?` };
   }
 
   if (sesion.paso === 5) {
-    sesion.dia = mensaje.toLowerCase();
+    const diaLower = texto.toLowerCase();
+    const diasValidos = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    
+    let diaEncontrado = null;
+    for (let d of diasValidos) {
+      if (texto.includes(d)) {
+        diaEncontrado = d;
+        break;
+      }
+    }
+    
+    if (!diaEncontrado) {
+      return { response: 'Por favor selecciona un día válido: Lunes, Martes, Miércoles, Jueves, Viernes o Sábado' };
+    }
+    
+    sesion.dia = diaEncontrado;
+    const horas = HORARIOS[diaEncontrado].join(', ');
     sesion.paso = 6;
-    return { response: `Excelente! ¿Qué hora te viene bien?` };
+    return { response: `¡Excelente! ${diaEncontrado}\n\nHorarios disponibles:\n${horas}\n¿Qué hora te viene bien?` };
   }
 
   if (sesion.paso === 6) {
@@ -116,7 +131,7 @@ async function procesar(mensaje, senderId) {
   if (sesion.paso === 8) {
     sesion.telefono = mensaje;
     sesion.paso = 9;
-    return { response: `Perfecto! ¿Confirmamos la cita?\n\n📅 ${sesion.dia} - ${sesion.hora}\n🐾 ${sesion.cantidad} ${sesion.tipo} ${sesion.raza} (${sesion.tamanio})\n👤 ${sesion.nombre}\n📞 ${sesion.telefono}\n\nDi "confirmar" para agendar` };
+    return { response: `¿Confirmamos la cita?\n\n📅 ${sesion.dia} - ${sesion.hora}\n🐾 ${sesion.cantidad} ${sesion.tipo} ${sesion.raza} (${sesion.tamanio})\n👤 ${sesion.nombre}\n📞 ${sesion.telefono}\n\nEscribe "confirmar" para agendar` };
   }
 
   if (sesion.paso === 9) {
@@ -143,7 +158,7 @@ async function procesar(mensaje, senderId) {
     return { response: 'Por favor confirma escribiendo "confirmar"' };
   }
 
-  return { response: 'Algo salió mal, empieza de nuevo escribiendo "agendar"' };
+  return { response: 'Algo salió mal. Escribe "agendar" para comenzar de nuevo' };
 }
 
 app.post('/chat', async (req, res) => {

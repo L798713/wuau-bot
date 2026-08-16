@@ -36,16 +36,20 @@
             <button class="send" onclick="send()">▶</button>
         </div>
     </div>
+
     <script>
         const URL = 'https://wuau-bot-7vya.onrender.com/chat';
         const uid = 'u' + Date.now();
         let busy = false;
+
         function send(texto) {
             const msg = texto || document.getElementById('inp').value.trim();
             if (!msg || busy) return;
             busy = true;
+            
             addMsg('user', msg);
             document.getElementById('inp').value = '';
+
             fetch(URL, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -64,6 +68,7 @@
                 busy = false;
             });
         }
+
         function addMsg(type, text) {
             const div = document.createElement('div');
             div.className = type === 'bot' ? 'msg-bot' : 'msg-user';
@@ -71,24 +76,49 @@
             document.getElementById('msgs').appendChild(div);
             scroll();
         }
+
         function makeBtns(r) {
             const resp = r.toLowerCase();
             let opciones = [];
-            if (resp.includes('extra')) {
-                opciones = [['Shampoo antipulgas', 'shampoo'], ['Desenredo', 'desenredo'], ['Ninguno', 'ninguno']];
-            } else if (resp.includes('servicio')) {
-                opciones = [['Baño Completo', 'baño'], ['Limpieza oídos', 'limpieza'], ['Corte uñas', 'corte']];
-            } else if (resp.includes('hora')) {
-                opciones = [['8:00 AM', '8:00 AM'], ['8:30 AM', '8:30 AM'], ['9:00 AM', '9:00 AM'], ['10:00 AM', '10:00 AM'], ['11:00 AM', '11:00 AM'], ['12:00 PM', '12:00 PM'], ['1:00 PM', '1:00 PM'], ['2:00 PM', '2:00 PM'], ['3:00 PM', '3:00 PM'], ['4:00 PM', '4:00 PM']];
-            } else if (resp.includes('día') || resp.includes('lunes')) {
-                opciones = [['Lunes', 'lunes'], ['Martes', 'martes'], ['Miércoles', 'miercoles'], ['Jueves', 'jueves'], ['Viernes', 'viernes'], ['Sábado', 'sabado']];
-            } else if (resp.includes('tamaño')) {
-                opciones = [['Mini', 'mini'], ['Pequeño', 'pequeno'], ['Mediano', 'mediano'], ['Grande', 'grande'], ['Extra Grande', 'extragrande']];
-            } else if (resp.includes('perro') || resp.includes('gato')) {
-                opciones = [['🐕 Perro', 'perro'], ['🐱 Gato', 'gato']];
-            } else if (resp.includes('quieres')) {
-                opciones = [['Agendar cita', 'agendar'], ['Ver precios', 'precios'], ['Conocer servicios', 'servicios']];
+
+            if (resp.includes('horarios disponibles')) {
+                opciones = [
+                    ['8:00 AM', '8:00 AM'], 
+                    ['8:30 AM', '8:30 AM'],
+                    ['9:00 AM', '9:00 AM'],
+                    ['10:00 AM', '10:00 AM'],
+                    ['11:00 AM', '11:00 AM'],
+                    ['12:00 PM', '12:00 PM'],
+                    ['1:00 PM', '1:00 PM'],
+                    ['2:00 PM', '2:00 PM'],
+                    ['3:00 PM', '3:00 PM'],
+                    ['4:00 PM', '4:00 PM']
+                ];
             }
+            else if (resp.includes('disponibilidad') && (resp.includes('lunes') || resp.includes('martes') || resp.includes('miercoles') || resp.includes('jueves') || resp.includes('viernes') || resp.includes('sabado'))) {
+                opciones = [
+                    ['Lunes', 'lunes'],
+                    ['Martes', 'martes'],
+                    ['Miércoles', 'miercoles'],
+                    ['Jueves', 'jueves'],
+                    ['Viernes', 'viernes'],
+                    ['Sábado', 'sabado']
+                ];
+            }
+            else if (resp.includes('perro') && resp.includes('gato') && resp.includes('mascota')) {
+                opciones = [
+                    ['🐕 Perro', 'perro'],
+                    ['🐱 Gato', 'gato']
+                ];
+            }
+            else if (resp.includes('quieres') && resp.includes('agendar')) {
+                opciones = [
+                    ['Agendar cita', 'agendar'],
+                    ['Ver precios', 'precios'],
+                    ['Conocer servicios', 'servicios']
+                ];
+            }
+
             if (opciones.length > 0) {
                 setTimeout(() => {
                     const div = document.createElement('div');
@@ -105,14 +135,17 @@
                 }, 50);
             }
         }
+
         function scroll() {
             setTimeout(() => {
                 document.getElementById('msgs').scrollTop = document.getElementById('msgs').scrollHeight;
             }, 0);
         }
+
         document.getElementById('inp').addEventListener('keypress', e => {
             if (e.key === 'Enter') send();
         });
+
         addMsg('bot', '¡Hola! 👋 Bienvenido a WUAU PET SPA 🐕🐱\n¿En qué puedo ayudarte hoy?');
     </script>
 </body>
