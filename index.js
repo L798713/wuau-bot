@@ -53,6 +53,31 @@ function normalizar(texto) {
   return texto.toLowerCase().trim().replace(/[áéíóú]/g, c => ({á:'a',é:'e',í:'i',ó:'o',ú:'u'}[c]));
 }
 
+function calcularFechaYHora(dia, hora) {
+  const diasMap = { 'lunes': 1, 'martes': 2, 'miercoles': 3, 'jueves': 4, 'viernes': 5, 'sabado': 6, 'domingo': 0 };
+  
+  const hoy = new Date();
+  const diaActual = hoy.getDay();
+  const diaSeleccionado = diasMap[dia];
+  
+  let diasAdelante = diaSeleccionado - diaActual;
+  if (diasAdelante <= 0) diasAdelante += 7;
+  
+  const fecha = new Date(hoy);
+  fecha.setDate(fecha.getDate() + diasAdelante);
+  
+  const [horaStr, ampm] = hora.split(' ');
+  const [h, m] = horaStr.split(':');
+  let horas = parseInt(h);
+  
+  if (ampm === 'PM' && horas !== 12) horas += 12;
+  if (ampm === 'AM' && horas === 12) horas = 0;
+  
+  fecha.setHours(horas, parseInt(m), 0, 0);
+  
+  return fecha;
+}
+
 async function procesar(mensaje, senderId) {
   const texto = normalizar(mensaje);
   
@@ -144,42 +169,20 @@ async function procesar(mensaje, senderId) {
 
   if (sesion.paso === 9) {
     if (texto.includes('confirmar')) {
-try {
-  const diasMap = {
-    'lunes': 0, 'martes': 1, 'miercoles': 2, 'jueves': 3, 'viernes': 4, 
-'sabado': 5
-  };
-  
-  const hoy = new Date();
-  const proximoLunes = new Date(hoy);
-  proximoLunes.setDate(hoy.getDate() + (8 - hoy.getDay()) % 7 || 7);
-  
-  const diaFecha = new Date(proximoLunes);
-  diaFecha.setDate(proximoLunes.getDate() + diasMap[sesion.dia]);
-  
-  const [hora, ampm] = sesion.hora.split(' ');
-  const [horas, mins] = hora.split(':');
-  let h = parseInt(horas);
-  if (ampm === 'PM' && h !== 12) h += 12;
-  if (ampm === 'AM' && h === 12) h = 0;
-  
-  diaFecha.setHours(h, parseInt(mins), 0);
-  
-  const endTime = new Date(diaFecha);
-  endTime.setHours(endTime.getHours() + 2);
-  
-  await calendar.events.insert({
-    calendarId: CALENDAR_ID,
-    requestBody: {
-      summary: `${sesion.cantidad} ${sesion.tipo} - ${sesion.nombre}`,
-      description: `Raza: ${sesion.raza}\nTamaño: 
-${sesion.tamanio}\nTeléfono: ${sesion.telefono}`,
-      start: { dateTime: diaFecha.toISOString(), timeZone: TIMEZONE },
-      end: { dateTime: endTime.toISOString(), timeZone: TIMEZONE }
-    }
-  });
-}        
-});
+      try {
+        const fechaEvento = calcularFechaYHora(sesion.dia, sesion.hora);
+        const fechaFin = new Date(fechaEvento);
+        fechaFin.setHours(fechaFin.getHours() + 2);
+        
+        await calendar.events.insert({
+          calendarId: CALENDAR_ID,
+          requestBody: {
+            summary: `${sesion.cantidad} ${sesion.tipo} - ${sesion.nombre}`,
+            description: `Raza: ${sesion.raza}\nTamaño: ${sesion.tamanio}\nTeléfono: ${sesion.telefono}`,
+            start: { dateTime: fechaEvento.toISOString(), timeZone: TIMEZONE },
+            end: { dateTime: fechaFin.toISOString(), timeZone: TIMEZONE }
+          }
+        });
       } catch (err) {
         console.error('Error Google Calendar:', err);
       }
