@@ -19,8 +19,8 @@ const auth = new google.auth.GoogleAuth({ credentials: serviceAccount, scopes: [
 const calendar = google.calendar({ version: 'v3', auth });
 const CALENDAR_ID = '41b56c3adcdac185b06be6c47b85a130f083210e1555f6f3640b367f4044168c@group.calendar.google.com';
 const HORARIOS = {'lunes': ['9:00 AM', '11:00 AM', '3:00 PM'], 'martes': ['9:00 AM', '11:00 AM', '1:00 PM', '3:00 PM'], 'miercoles': ['9:00 AM', '11:00 AM', '1:00 PM', '3:00 PM'], 'jueves': ['9:00 AM', '11:00 AM', '1:00 PM', '3:00 PM'], 'viernes': ['8:30 AM', '10:00 AM', '12:00 PM', '4:00 PM'], 'sabado': ['8:00 AM', '10:00 AM', '12:00 PM', '2:00 PM', '4:00 PM']};
-const FECHAS = {'lunes': '20 de agosto', 'martes': '21 de agosto', 'miercoles': '22 de agosto', 'jueves': '23 de agosto', 'viernes': '24 de agosto', 'sabado': '25 de agosto'};
-const FECHAS_EVENTO = {'lunes': '2026-08-20', 'martes': '2026-08-21', 'miercoles': '2026-08-22', 'jueves': '2026-08-23', 'viernes': '2026-08-24', 'sabado': '2026-08-25'};
+const FECHAS = {'lunes': '17 de agosto', 'martes': '18 de agosto', 'miercoles': '19 de agosto', 'jueves': '20 de agosto', 'viernes': '21 de agosto', 'sabado': '22 de agosto'};
+const FECHAS_EVENTO = {'lunes': '2026-08-17', 'martes': '2026-08-18', 'miercoles': '2026-08-19', 'jueves': '2026-08-20', 'viernes': '2026-08-21', 'sabado': '2026-08-22'};
 const SESIONES = {};
 function normalizar(t) { return t.toLowerCase().trim().replace(/[áéíóú]/g, c => ({á:'a',é:'e',í:'i',ó:'o',ú:'u'}[c])); }
 async function procesar(msg, sid) {
