@@ -14,6 +14,7 @@
         #msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; background: #f8f9fa; }
         .msg-bot { background: white; padding: 12px 16px; border-radius: 12px; border: 1px solid #e0e0e0; font-size: 15px; line-height: 1.4; align-self: flex-start; max-width: 85%; }
         .msg-user { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 16px; border-radius: 12px; font-size: 15px; align-self: flex-end; max-width: 85%; }
+        .msg-success { background: #d4edda; color: #155724; padding: 12px 16px; border-radius: 12px; align-self: center; font-weight: 600; }
         .btns { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; width: 100%; }
         .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%; text-align: center; transition: all 0.2s; }
         .btn:active { transform: scale(0.98); }
@@ -41,6 +42,16 @@
         const URL = 'https://wuau-bot-7vya.onrender.com/chat';
         const uid = 'u' + Date.now();
         let busy = false;
+        let citaConfirmada = false;
+
+        const HORARIOS_POR_DIA = {
+            'lunes': ['9:00 AM', '11:00 AM', '3:00 PM'],
+            'martes': ['9:00 AM', '11:00 AM', '1:00 PM', '3:00 PM'],
+            'miercoles': ['9:00 AM', '11:00 AM', '1:00 PM', '3:00 PM'],
+            'jueves': ['9:00 AM', '11:00 AM', '1:00 PM', '3:00 PM'],
+            'viernes': ['8:30 AM', '10:00 AM', '12:00 PM', '4:00 PM'],
+            'sabado': ['8:00 AM', '10:00 AM', '12:00 PM', '2:00 PM', '4:00 PM']
+        };
 
         function send(texto) {
             const msg = texto || document.getElementById('inp').value.trim();
@@ -59,6 +70,13 @@
             .then(d => {
                 if (d.response) {
                     addMsg('bot', d.response);
+                    if (d.response.includes('está confirmada')) {
+                        citaConfirmada = true;
+                        setTimeout(() => {
+                            addMsg('success', '✅ ¡Tu cita fue agendada exitosamente!');
+                            setTimeout(() => { citaConfirmada = false; }, 3000);
+                        }, 500);
+                    }
                     makeBtns(d.response);
                 }
                 busy = false;
@@ -71,7 +89,11 @@
 
         function addMsg(type, text) {
             const div = document.createElement('div');
-            div.className = type === 'bot' ? 'msg-bot' : 'msg-user';
+            if (type === 'success') {
+                div.className = 'msg-success';
+            } else {
+                div.className = type === 'bot' ? 'msg-bot' : 'msg-user';
+            }
             div.textContent = text;
             document.getElementById('msgs').appendChild(div);
             scroll();
@@ -81,42 +103,30 @@
             const resp = r.toLowerCase();
             let opciones = [];
 
-            if (resp.includes('horarios disponibles')) {
-                opciones = [
-                    ['8:00 AM', '8:00 AM'], 
-                    ['8:30 AM', '8:30 AM'],
-                    ['9:00 AM', '9:00 AM'],
-                    ['10:00 AM', '10:00 AM'],
-                    ['11:00 AM', '11:00 AM'],
-                    ['12:00 PM', '12:00 PM'],
-                    ['1:00 PM', '1:00 PM'],
-                    ['2:00 PM', '2:00 PM'],
-                    ['3:00 PM', '3:00 PM'],
-                    ['4:00 PM', '4:00 PM']
-                ];
-            }
+            if (resp.includes('cuál es el tamaño')) {
+                opciones = [['Mini', 'mini'], ['Pequeño', 'pequeno'], ['Mediano', 'mediano'], ['Grande', 'grande'], ['Extra Grande', 'extragrande']];
+            } 
+            else if (resp.includes('horarios disponibles:') && (resp.includes('9:00') || resp.includes('8:30') || resp.includes('8:00') || resp.includes('10:00') || resp.includes('11:00') || resp.includes('12:00') || resp.includes('1:00') || resp.includes('2:00') || resp.includes('3:00') || resp.includes('4:00'))) {
+                const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+                let diaEncontrado = null;
+                for (let d of dias) {
+                    if (resp.includes(d)) {
+                        diaEncontrado = d;
+                        break;
+                    }
+                }
+                if (diaEncontrado && HORARIOS_POR_DIA[diaEncontrado]) {
+                    opciones = HORARIOS_POR_DIA[diaEncontrado].map(h => [h, h]);
+                }
+            } 
             else if (resp.includes('disponibilidad') && (resp.includes('lunes') || resp.includes('martes') || resp.includes('miercoles') || resp.includes('jueves') || resp.includes('viernes') || resp.includes('sabado'))) {
-                opciones = [
-                    ['Lunes', 'lunes'],
-                    ['Martes', 'martes'],
-                    ['Miércoles', 'miercoles'],
-                    ['Jueves', 'jueves'],
-                    ['Viernes', 'viernes'],
-                    ['Sábado', 'sabado']
-                ];
-            }
+                opciones = [['Lunes', 'lunes'], ['Martes', 'martes'], ['Miércoles', 'miercoles'], ['Jueves', 'jueves'], ['Viernes', 'viernes'], ['Sábado', 'sabado']];
+            } 
             else if (resp.includes('perro') && resp.includes('gato') && resp.includes('mascota')) {
-                opciones = [
-                    ['🐕 Perro', 'perro'],
-                    ['🐱 Gato', 'gato']
-                ];
-            }
+                opciones = [['🐕 Perro', 'perro'], ['🐱 Gato', 'gato']];
+            } 
             else if (resp.includes('quieres') && resp.includes('agendar')) {
-                opciones = [
-                    ['Agendar cita', 'agendar'],
-                    ['Ver precios', 'precios'],
-                    ['Conocer servicios', 'servicios']
-                ];
+                opciones = [['Agendar cita', 'agendar'], ['Ver precios', 'precios'], ['Conocer servicios', 'servicios']];
             }
 
             if (opciones.length > 0) {
