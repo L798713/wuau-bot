@@ -144,16 +144,42 @@ async function procesar(mensaje, senderId) {
 
   if (sesion.paso === 9) {
     if (texto.includes('confirmar')) {
-      try {
-        await calendar.events.insert({
-          calendarId: CALENDAR_ID,
-          requestBody: {
-            summary: `${sesion.cantidad} ${sesion.tipo} - ${sesion.nombre}`,
-            description: `Raza: ${sesion.raza}\nTamaño: ${sesion.tamanio}\nTeléfono: ${sesion.telefono}`,
-            start: { dateTime: new Date().toISOString(), timeZone: TIMEZONE },
-            end: { dateTime: new Date(Date.now() + 120 * 60000).toISOString(), timeZone: TIMEZONE }
-          }
-        });
+try {
+  const diasMap = {
+    'lunes': 0, 'martes': 1, 'miercoles': 2, 'jueves': 3, 'viernes': 4, 
+'sabado': 5
+  };
+  
+  const hoy = new Date();
+  const proximoLunes = new Date(hoy);
+  proximoLunes.setDate(hoy.getDate() + (8 - hoy.getDay()) % 7 || 7);
+  
+  const diaFecha = new Date(proximoLunes);
+  diaFecha.setDate(proximoLunes.getDate() + diasMap[sesion.dia]);
+  
+  const [hora, ampm] = sesion.hora.split(' ');
+  const [horas, mins] = hora.split(':');
+  let h = parseInt(horas);
+  if (ampm === 'PM' && h !== 12) h += 12;
+  if (ampm === 'AM' && h === 12) h = 0;
+  
+  diaFecha.setHours(h, parseInt(mins), 0);
+  
+  const endTime = new Date(diaFecha);
+  endTime.setHours(endTime.getHours() + 2);
+  
+  await calendar.events.insert({
+    calendarId: CALENDAR_ID,
+    requestBody: {
+      summary: `${sesion.cantidad} ${sesion.tipo} - ${sesion.nombre}`,
+      description: `Raza: ${sesion.raza}\nTamaño: 
+${sesion.tamanio}\nTeléfono: ${sesion.telefono}`,
+      start: { dateTime: diaFecha.toISOString(), timeZone: TIMEZONE },
+      end: { dateTime: endTime.toISOString(), timeZone: TIMEZONE }
+    }
+  });
+}        
+});
       } catch (err) {
         console.error('Error Google Calendar:', err);
       }
