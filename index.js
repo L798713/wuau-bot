@@ -34,9 +34,9 @@ async function cargarHorariosDelSheet() {
       const fecha = row[1];
       const horarios = row[2]?.split(',').map(h => h.trim()) || [];
       if (dia && horarios.length > 0) {
-        HORARIOS_CACHE[dia] = horarios;
-        FECHAS_CACHE[dia] = fecha;
-      }
+const diaNormalizado = normalizar(dia);
+HORARIOS_CACHE[diaNormalizado] = horarios;
+FECHAS_CACHE[diaNormalizado] = fecha;      }
     });
     console.log('✅ Horarios cargados del Sheet:', HORARIOS_CACHE);
   } catch (e) {
