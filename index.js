@@ -15,13 +15,36 @@ app.use((req, res, next) => {
 });
 app.use(bodyParser.json());
 const serviceAccount = process.env.GOOGLE_CREDENTIALS ? JSON.parse(process.env.GOOGLE_CREDENTIALS) : require('./wuau-bot-calendar-edd89b2454f4.json');
-const auth = new google.auth.GoogleAuth({ credentials: serviceAccount, scopes: ['https://www.googleapis.com/auth/calendar'] });
+const auth = new google.auth.GoogleAuth({ credentials: serviceAccount, scopes: ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/calendar'] });
+const sheets = google.sheets({ version: 'v4', auth });
 const calendar = google.calendar({ version: 'v3', auth });
 const CALENDAR_ID = '41b56c3adcdac185b06be6c47b85a130f083210e1555f6f3640b367f4044168c@group.calendar.google.com';
-const HORARIOS = {'lunes': ['9:00 AM', '11:00 AM', '3:00 PM'], 'martes': ['9:00 AM', '11:00 AM', '1:00 PM', '3:00 PM'], 'miercoles': ['9:00 AM', '11:00 AM', '1:00 PM', '3:00 PM'], 'jueves': ['9:00 AM', '11:00 AM', '1:00 PM', '3:00 PM'], 'viernes': ['8:30 AM', '10:00 AM', '12:00 PM', '4:00 PM'], 'sabado': ['8:00 AM', '10:00 AM', '12:00 PM', '2:00 PM', '4:00 PM']};
-const FECHAS = {'lunes': '17 de agosto', 'martes': '18 de agosto', 'miercoles': '19 de agosto', 'jueves': '20 de agosto', 'viernes': '21 de agosto', 'sabado': '22 de agosto'};
-const FECHAS_EVENTO = {'lunes': '2026-08-17', 'martes': '2026-08-18', 'miercoles': '2026-08-19', 'jueves': '2026-08-20', 'viernes': '2026-08-21', 'sabado': '2026-08-22'};
+const SHEET_ID = '1BC_KvB-NxCdCyf7dQThwj40rcHbnX2k_Z0LVbHLeNS8';
 const SESIONES = {};
+let HORARIOS_CACHE = {};
+let FECHAS_CACHE = {};
+async function cargarHorariosDelSheet() {
+  try {
+    const response = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Tabla_1!A2:C7' });
+    const rows = response.data.values || [];
+    HORARIOS_CACHE = {};
+    FECHAS_CACHE = {};
+    rows.forEach(row => {
+      const dia = row[0]?.toLowerCase().trim();
+      const fecha = row[1];
+      const horarios = row[2]?.split(',').map(h => h.trim()) || [];
+      if (dia && horarios.length > 0) {
+        HORARIOS_CACHE[dia] = horarios;
+        FECHAS_CACHE[dia] = fecha;
+      }
+    });
+    console.log('✅ Horarios cargados del Sheet:', HORARIOS_CACHE);
+  } catch (e) {
+    console.error('Error cargando Sheet:', e);
+  }
+}
+cargarHorariosDelSheet();
+setInterval(cargarHorariosDelSheet, 60000);
 function normalizar(t) { return t.toLowerCase().trim().replace(/[áéíóú]/g, c => ({á:'a',é:'e',í:'i',ó:'o',ú:'u'}[c])); }
 async function procesar(msg, sid) {
   const txt = normalizar(msg);
@@ -38,20 +61,26 @@ async function procesar(msg, sid) {
   }
   if (s.paso === 2) { s.raza = msg; s.paso = 3; return { response: `¡Excelente! ${s.tipo} ${s.raza} 🐾\n¿Cuántas mascotas son?` }; }
   if (s.paso === 3) { s.cantidad = parseInt(msg) || 1; s.paso = 4; return { response: `¡${s.cantidad} mascota(s)! 🐾\n¿Cuál es el tamaño?` }; }
-  if (s.paso === 4) { s.tamanio = msg; s.paso = 5; return { response: `Perfecto! Disponibilidad:\nLunes, Martes, Miércoles, Jueves, Viernes, Sábado\n¿Cuál día prefieres?` }; }
+  if (s.paso === 4) { s.tamanio = msg; s.paso = 5; return { response: `Perfecto! Disponibilidad:\n${Object.keys(HORARIOS_CACHE).join(', ').toUpperCase()}\n¿Cuál día prefieres?` }; }
   if (s.paso === 5) {
-    const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    const diasValidos = Object.keys(HORARIOS_CACHE);
     let d = null;
-    for (let dia of dias) { if (txt.includes(dia)) { d = dia; break; } }
-    if (!d) return { response: 'Por favor selecciona un día válido: Lunes, Martes, Miércoles, Jueves, Viernes o Sábado' };
+    for (let dia of diasValidos) {
+      if (txt.includes(dia)) {
+        d = dia;
+        break;
+      }
+    }
+    if (!d) return { response: `Por favor selecciona un día válido: ${diasValidos.join(', ').toUpperCase()}` };
     s.dia = d;
-    const h = HORARIOS[d].join(', ');
+    const h = HORARIOS_CACHE[d].join(', ');
+    const fecha = FECHAS_CACHE[d];
     s.paso = 6;
-    return { response: `¡Excelente! ${d} ${FECHAS[d]}\n\nHorarios disponibles:\n${h}\n¿Qué hora te viene bien?` };
+    return { response: `¡Excelente! ${d} ${fecha}\n\nHorarios disponibles:\n${h}\n¿Qué hora te viene bien?` };
   }
   if (s.paso === 6) { s.hora = msg; s.paso = 7; return { response: `Perfecto! ¿Cuál es tu nombre?` }; }
   if (s.paso === 7) { s.nombre = msg; s.paso = 8; return { response: `Mucho gusto ${msg}! ¿Cuál es tu teléfono?` }; }
-  if (s.paso === 8) { s.telefono = msg; s.paso = 9; return { response: `¿Confirmamos la cita?\n\n📅 ${s.dia} ${FECHAS[s.dia]} - ${s.hora}\n🐾 ${s.cantidad} ${s.tipo} ${s.raza} (${s.tamanio})\n👤 ${s.nombre}\n📞 ${msg}\n\nEscribe "confirmar" para agendar` }; }
+  if (s.paso === 8) { s.telefono = msg; s.paso = 9; const fecha = FECHAS_CACHE[s.dia]; return { response: `¿Confirmamos la cita?\n\n📅 ${s.dia} ${fecha} - ${s.hora}\n🐾 ${s.cantidad} ${s.tipo} ${s.raza} (${s.tamanio})\n👤 ${s.nombre}\n📞 ${msg}\n\nEscribe "confirmar" para agendar` }; }
   if (s.paso === 9) {
     if (txt.includes('confirmar')) {
       try {
@@ -60,13 +89,14 @@ async function procesar(msg, sid) {
         let hh = parseInt(h);
         if (ampm === 'PM' && hh !== 12) hh += 12;
         if (ampm === 'AM' && hh === 12) hh = 0;
-        const start = FECHAS_EVENTO[s.dia] + 'T' + String(hh).padStart(2, '0') + ':' + m + ':00-04:00';
+        const fechaISO = FECHAS_CACHE[s.dia].split('/').reverse().join('-');
+        const start = fechaISO + 'T' + String(hh).padStart(2, '0') + ':' + m + ':00-04:00';
         const endH = String((hh + 2) % 24).padStart(2, '0');
-        const end = FECHAS_EVENTO[s.dia] + 'T' + endH + ':' + m + ':00-04:00';
+        const end = fechaISO + 'T' + endH + ':' + m + ':00-04:00';
         await calendar.events.insert({ calendarId: CALENDAR_ID, requestBody: { summary: `${s.cantidad} ${s.tipo} - ${s.nombre}`, description: `Raza: ${s.raza}\nTamaño: ${s.tamanio}\nTeléfono: ${s.telefono}`, start: { dateTime: start }, end: { dateTime: end } } });
       } catch (e) { console.error('Error:', e); }
       s.paso = 0;
-      return { response: `¡Perfecto! ✅\n\nTu cita está confirmada:\n📅 ${s.dia} ${FECHAS[s.dia]} - ${s.hora}\n💰 Depósito: $30 (Zelle: 267-702-9312)\n📞 Confirmación: 267-702-9312\n\n¡Gracias por confiar en WUAU PET SPA! 🐕🐱💕` };
+      return { response: `¡Perfecto! ✅\n\nTu cita está confirmada:\n📅 ${s.dia} ${FECHAS_CACHE[s.dia]} - ${s.hora}\n💰 Depósito: $30 (Zelle: 267-702-9312)\n📞 Confirmación: 267-702-9312\n\n¡Gracias por confiar en WUAU PET SPA! 🐕🐱💕` };
     }
     return { response: 'Por favor confirma escribiendo "confirmar"' };
   }
