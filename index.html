@@ -119,10 +119,12 @@
                     opciones = HORARIOS_POR_DIA[diaEncontrado].map(h => [h, h]);
                 }
             } 
-            else if (resp.includes('disponibilidad') && (resp.includes('lunes') || resp.includes('martes') || resp.includes('miercoles') || resp.includes('jueves') || resp.includes('viernes') || resp.includes('sabado'))) {
-                opciones = [['Lunes', 'lunes'], ['Martes', 'martes'], ['Miércoles', 'miercoles'], ['Jueves', 'jueves'], ['Viernes', 'viernes'], ['Sábado', 'sabado']];
-            } 
-            else if (resp.includes('perro') && resp.includes('gato') && resp.includes('mascota')) {
+else if (resp.includes('disponibilidad')) {
+  opciones = [['Lunes', 'lunes'], ['Martes', 'martes'], ['Miércoles', 
+'miercoles'], ['Jueves', 'jueves'], ['Viernes', 'viernes'], ['Sábado', 
+'sabado']];
+}            else if (resp.includes('perro') 
+&& resp.includes('gato') && resp.includes('mascota')) {
                 opciones = [['🐕 Perro', 'perro'], ['🐱 Gato', 'gato']];
             } 
             else if (resp.includes('quieres') && resp.includes('agendar')) {
