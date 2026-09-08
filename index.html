@@ -216,14 +216,7 @@
       <p>Bot de Agendamiento</p>
     </div>
 
-    <div class="chat-container" id="chatContainer">
-      <div class="message bot-message">
-        <div class="content">
-          👋 ¡Hola! Soy el asistente de WUAU PET SPA. ¿Cómo puedo ayudarte?
-          <div class="options-container" id="initialOptions"></div>
-        </div>
-      </div>
-    </div>
+    <div class="chat-container" id="chatContainer"></div>
 
     <div class="input-area">
       <input 
@@ -246,6 +239,7 @@
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
     const BACKEND_URL = 'https://wuau-bot-7vya.onrender.com';
+    
     let userId = localStorage.getItem('userId') || 'user_' + Date.now();
     localStorage.setItem('userId', userId);
     let isWaitingForResponse = false;
