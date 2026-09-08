@@ -1,25 +1,16 @@
 {
   "name": "wuau-bot",
-  "version": "1.0.0",
-  "description": "Bot de WhatsApp para WUAU PET SPA",
+  "version": "11.3",
+  "description": "Bot Express para WUAU PET SPA",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js",
     "dev": "node bot.js"
   },
-  "keywords": [
-    "whatsapp",
-    "bot",
-    "claude",
-    "grooming"
-  ],
-  "author": "",
-  "license": "MIT",
   "dependencies": {
-    "whatsapp-web.js": "^1.26.1",
-    "qrcode-terminal": "^0.12.0",
-    "@anthropic-ai/sdk": "^0.24.3",
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "fs": "^0.0.1-security"
+    "googleapis": "^143.0.0"
   }
 }
