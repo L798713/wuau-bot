@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WUAU PET SPA - Bot</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 10px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: 90vh;
+      max-height: 700px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+
+    .header p {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .message {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .bot-message {
+      justify-content: flex-start;
+    }
+
+    .bot-message .content {
+      background: #f0f0f0;
+      color: #333;
+      padding: 12px 16px;
+      border-radius: 18px;
+      border-bottom-left-radius: 4px;
+      max-width: 80%;
+      word-wrap: break-word;
+      line-height: 1.4;
+    }
+
+    .user-message {
+      justify-content: flex-end;
+    }
+
+    .user-message .content {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 18px;
+      border-bottom-right-radius: 4px;
+      max-width: 80%;
+      word-wrap: break-word;
+      line-height: 1.4;
+    }
+
+    .input-area {
+      padding: 15px 20px;
+      border-top: 1px solid #e0e0e0;
+      background: #fafafa;
+      display: flex;
+      gap: 10px;
+    }
+
+    .input-field {
+      flex: 1;
+      border: 1px solid #ddd;
+      border-radius: 25px;
+      padding: 12px 16px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    .input-field:focus {
+      border-color: #667eea;
+    }
+
+    .send-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: transform 0.2s;
+    }
+
+    .send-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .send-btn:active {
+      transform: scale(0.95);
+    }
+
+    .options-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .option-btn {
+      background: white;
+      border: 2px solid #667eea;
+      color: #667eea;
+      padding: 10px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.3s;
+      flex: 1;
+      min-width: 100px;
+      text-align: center;
+    }
+
+    .option-btn:hover {
+      background: #667eea;
+      color: white;
+    }
+
+    .option-btn:active {
+      transform: scale(0.95);
+    }
+
+    .loading {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #667eea;
+      margin-right: 5px;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    .footer {
+      padding: 10px;
+      text-align: center;
+      font-size: 11px;
+      color: #999;
+      border-top: 1px solid #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🐾 WUAU PET SPA</h1>
+      <p>Bot de Agendamiento</p>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+      <div class="message bot-message">
+        <div class="content">
+          👋 ¡Hola! Soy el asistente de WUAU PET SPA. ¿Cómo puedo ayudarte?
+          <div class="options-container" id="initialOptions"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <input 
+        type="text" 
+        id="messageInput" 
+        class="input-field" 
+        placeholder="Escribe tu mensaje..."
+        autocomplete="off"
+      >
+      <button class="send-btn" id="sendBtn">➤</button>
+    </div>
+
+    <div class="footer">
+      📍 3516 Drumore Dr | 📱 267-702-9312
+    </div>
+  </div>
+
+  <script>
+    const chatContainer = document.getElementById('chatContainer');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const BACKEND_URL = 'https://wuau-bot-7vya.onrender.com';
+    let userId = localStorage.getItem('userId') || 'user_' + Date.now();
+    localStorage.setItem('userId', userId);
+    let isWaitingForResponse = false;
+
+    function createMessage(text, isUser) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+      
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'content';
+      contentDiv.innerHTML = text.replace(/\n/g, '<br>');
+      
+      messageDiv.appendChild(contentDiv);
+      chatContainer.appendChild(messageDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+      
+      return messageDiv;
+    }
+
+    function createOptionsButtons(options) {
+      const optionsContainer = document.createElement('div');
+      optionsContainer.className = 'options-container';
+      
+      options.forEach(option => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = option;
+        btn.onclick = () => sendMessage(option);
+        optionsContainer.appendChild(btn);
+      });
+      
+      return optionsContainer;
+    }
+
+    async function sendMessage(text = null) {
+      const message = text || messageInput.value.trim();
+      
+      if (!message || isWaitingForResponse) return;
+      
+      messageInput.value = '';
+      createMessage(message, true);
+      isWaitingForResponse = true;
+
+      try {
+        const response = await fetch(`${BACKEND_URL}/webhook`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: userId,
+            message: message
+          })
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        
+        const botMessageDiv = createMessage(data.response, false);
+        
+        if (data.options && data.options.length > 0) {
+          const optionsDiv = createOptionsButtons(data.options);
+          botMessageDiv.querySelector('.content').appendChild(optionsDiv);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        createMessage('❌ Error de conexión. Por favor intenta de nuevo.', false);
+      } finally {
+        isWaitingForResponse = false;
+        messageInput.focus();
+      }
+    }
+
+    sendBtn.addEventListener('click', () => sendMessage());
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    messageInput.focus();
+  </script>
+</body>
+</html>
