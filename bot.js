@@ -7,7 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({
-  origin: ['https://lucky-sopapillas-b31108.netlify.app', 'https://L798713.github.io', 'http://localhost:*'],
+  origin: ['https://lucky-sopapillas-b31108.netlify.app', 'https://l798713.github.io', 'http://localhost:*', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
