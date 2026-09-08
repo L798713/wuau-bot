@@ -15,7 +15,6 @@ app.use(cors({
 
 app.use(express.json());
 
-// ==================== GOOGLE SERVICES ====================
 let calendar, sheets;
 
 async function initializeGoogleServices() {
@@ -38,7 +37,6 @@ async function initializeGoogleServices() {
 
 initializeGoogleServices();
 
-// ==================== SESSION STORAGE ====================
 const sessions = new Map();
 
 function getOrCreateSession(userId) {
@@ -53,13 +51,12 @@ function getOrCreateSession(userId) {
   return sessions.get(userId);
 }
 
-// ==================== TRANSLATIONS ====================
 const translations = {
   es: {
-    choose_language: '🌍 Elige tu idioma / Choose your language:',
+    choose_language: '🌍 ¡Hola! Hello!\nElige tu idioma / Choose your language:',
     spanish: '🇪🇸 Español',
     english: '🇬🇧 English',
-    welcome: '¡Hola! Bienvenido a WUAU PET SPA 🐾\n¿Cómo puedo ayudarte hoy?',
+    welcome: '¡Bienvenido a WUAU PET SPA 🐾!\n¿Cómo puedo ayudarte hoy?',
     agendar_cita: 'Agendar cita',
     ver_precios: 'Ver precios',
     contactar: 'Contactar a Lesly',
@@ -79,8 +76,8 @@ const translations = {
     contact_info: '📞 CONTACTA A LESLY\n\nTeléfono: 267-702-9312\nZelle: 267-702-9312\n\n¡Lesly estará encantada de ayudarte!',
     booking_service: '¿Qué servicio necesitas?',
     booking_pets: '¿Cuántas mascotas traerás?',
-    booking_breed: 'Cuéntanos sobre tu mascota (raza, nombre, tamaño)',
     booking_size: '¿Qué tamaño tiene?',
+    booking_breed: 'Cuéntanos sobre tu mascota (raza y nombre)',
     booking_name: '¿Cuál es tu nombre?',
     booking_phone: '¿Tu teléfono de contacto?',
     booking_date: '¿Qué día prefieres?',
@@ -112,10 +109,10 @@ const translations = {
     four_plus_pets: '4+ mascotas'
   },
   en: {
-    choose_language: '🌍 Choose your language / Elige tu idioma:',
+    choose_language: '🌍 Hello! ¡Hola!\nChoose your language / Elige tu idioma:',
     spanish: '🇪🇸 Español',
     english: '🇬🇧 English',
-    welcome: 'Hello! Welcome to WUAU PET SPA 🐾\nHow can I help you today?',
+    welcome: 'Welcome to WUAU PET SPA 🐾!\nHow can I help you today?',
     agendar_cita: 'Book an appointment',
     ver_precios: 'View prices',
     contactar: 'Contact Lesly',
@@ -135,8 +132,8 @@ const translations = {
     contact_info: '📞 CONTACT LESLY\n\nPhone: 267-702-9312\nZelle: 267-702-9312\n\nLesly will be delighted to help!',
     booking_service: 'What service do you need?',
     booking_pets: 'How many pets will you bring?',
-    booking_breed: 'Tell us about your pet (breed, name, size)',
     booking_size: 'What size are they?',
+    booking_breed: 'Tell us about your pet (breed and name)',
     booking_name: 'What is your name?',
     booking_phone: 'Your contact phone?',
     booking_date: 'What day do you prefer?',
@@ -171,7 +168,6 @@ const translations = {
 
 const t = (lang, key) => translations[lang][key] || translations['es'][key];
 
-// ==================== BOT LOGIC ====================
 const SERVICES = {
   'baño': { es: 'baño_completo', en: 'bano_completo', duration: 120 },
   'oidos': { es: 'limpieza_oidos', en: 'limpieza_oidos', duration: 30 },
@@ -198,7 +194,6 @@ function generateBotResponse(session, userInput) {
   const { state, language, data } = session;
   const lang = language || 'es';
 
-  // Language selection
   if (state === 'language_select') {
     if (input.includes('español') || input === '1') {
       session.language = 'es';
@@ -221,7 +216,6 @@ function generateBotResponse(session, userInput) {
     };
   }
 
-  // Main menu
   if (state === 'main_menu') {
     if (input.includes('agendar') || input.includes('book') || input.includes('appointment')) {
       session.state = 'booking_service';
@@ -262,7 +256,6 @@ function generateBotResponse(session, userInput) {
     };
   }
 
-  // Booking service
   if (state === 'booking_service') {
     if (input.includes('baño') || input.includes('bath') || input.includes('full')) {
       data.service = 'baño';
@@ -292,7 +285,6 @@ function generateBotResponse(session, userInput) {
     };
   }
 
-  // Number of pets
   if (state === 'booking_pets') {
     const petMatch = input.match(/\d+/);
     if (petMatch) {
@@ -309,7 +301,6 @@ function generateBotResponse(session, userInput) {
     };
   }
 
-  // Size
   if (state === 'booking_size') {
     const sizeMap = { 'pequeño': 's', 'extra pequeño': 'xs', 'small': 's', 'extra small': 'xs', 'mediano': 'm', 'medium': 'm', 'grande': 'l', 'large': 'l', 'extra grande': 'xl', 'extra large': 'xl' };
     const size = sizeMap[input] || sizeMap[input.split(' ')[0]];
@@ -324,21 +315,18 @@ function generateBotResponse(session, userInput) {
     };
   }
 
-  // Breed/pet info
   if (state === 'booking_breed') {
     data.petInfo = userInput;
     session.state = 'booking_name';
     return { text: t(lang, 'booking_name'), options: [] };
   }
 
-  // Name
   if (state === 'booking_name') {
     data.clientName = userInput;
     session.state = 'booking_phone';
     return { text: t(lang, 'booking_phone'), options: [] };
   }
 
-  // Phone
   if (state === 'booking_phone') {
     if (/^\d{10,}$/.test(input.replace(/\D/g, ''))) {
       data.phone = userInput;
@@ -355,7 +343,6 @@ function generateBotResponse(session, userInput) {
     };
   }
 
-  // Date
   if (state === 'booking_date') {
     const dayMap = { 'lunes': 'monday', 'martes': 'tuesday', 'miércoles': 'wednesday', 'jueves': 'thursday', 'viernes': 'friday', 'sábado': 'saturday', 'monday': 'monday', 'tuesday': 'tuesday', 'wednesday': 'wednesday', 'thursday': 'thursday', 'friday': 'friday', 'saturday': 'saturday' };
     const day = dayMap[input.split(' ')[0]] || dayMap[input];
@@ -374,7 +361,6 @@ function generateBotResponse(session, userInput) {
     };
   }
 
-  // Time
   if (state === 'booking_time') {
     if (/^\d{2}:\d{2}$/.test(input)) {
       data.time = input;
@@ -391,7 +377,6 @@ function generateBotResponse(session, userInput) {
     };
   }
 
-  // Confirm
   if (state === 'booking_confirm') {
     if (input.includes('confirmar') || input.includes('confirm')) {
       session.state = 'main_menu';
@@ -414,11 +399,10 @@ function generateBotResponse(session, userInput) {
   };
 }
 
-// ==================== API ENDPOINTS ====================
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
-    version: '11.4-fixed',
+    version: '11.5-polished',
     timestamp: new Date().toISOString()
   });
 });
@@ -442,10 +426,8 @@ app.post('/webhook', (req, res) => {
   }
 });
 
-// ==================== START ====================
 app.listen(PORT, () => {
-  console.log(`\n🚀 WUAU PET SPA Bot v11.4-FIXED running on port ${PORT}`);
-  console.log(`✅ 100% Bilingual - No language mixing`);
-  console.log(`📍 Health: http://localhost:${PORT}/health`);
-  console.log(`📍 Webhook: http://localhost:${PORT}/webhook\n`);
+  console.log(`\n🚀 WUAU PET SPA Bot v11.5-POLISHED running on port ${PORT}`);
+  console.log(`✅ Bilingual - No size repetition`);
+  console.log(`📍 Health: http://localhost:${PORT}/health\n`);
 });
