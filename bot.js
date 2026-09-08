@@ -109,7 +109,7 @@ const translations = {
     four_plus_pets: '4+ mascotas'
   },
   en: {
-    choose_language: '🌍 Hello! ¡Hola!\nChoose your language / Elige tu idioma:',
+    choose_language: '🌍 ¡Hola! Hello!\nBienvenido | Welcome\nWUAU PET SPA 🐾\n\nElige tu idioma / Choose your language:',
     spanish: '🇪🇸 Español',
     english: '🇬🇧 English',
     welcome: 'Welcome to WUAU PET SPA 🐾!\nHow can I help you today?',
