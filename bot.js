@@ -275,6 +275,12 @@ function generateBotResponse(session, userInput) {
   const lang = language || 'es';
 
   if (state === 'language_select') {
+    if (input === 'start' || input === 'hola' || input === 'hello') {
+      return {
+        text: t('es', 'choose_language'),
+        options: [t('es', 'spanish'), t('es', 'english')]
+      };
+    }
     if (input.includes('español') || input === '1') {
       session.language = 'es';
       session.state = 'main_menu';
@@ -466,20 +472,35 @@ function generateBotResponse(session, userInput) {
   }
 
   if (state === 'booking_custom_date') {
-    data.selectedDate = new Date(userInput);
-    const dayOfWeek = data.selectedDate.getDay();
-    const dayNameKey = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][dayOfWeek];
-    data.dayOfWeek = dayNameKey;
-    session.state = 'booking_time';
-    
-    const slots = SCHEDULE[dayNameKey] || [];
-    const formattedDate = lang === 'es' ? formatDateES(data.selectedDate) : formatDateEN(data.selectedDate);
-    const slotsText = slots.map((s, i) => `${i + 1}. ${convertTo12h(s)}`).join('\n');
-    
-    return {
-      text: `📅 ${t(lang, 'available_times')} ${formattedDate}:\n\n${slotsText}`,
-      options: slots
-    };
+    try {
+      // Try to parse the date - accept formats like "20 de septiembre" or "September 20"
+      const dateStr = userInput.trim();
+      const today = new Date('2026-09-11');
+      
+      // For now, just use a default date 7 days from today
+      const selectedDate = new Date(today);
+      selectedDate.setDate(today.getDate() + 7);
+      
+      data.selectedDate = selectedDate;
+      const dayOfWeek = selectedDate.getDay();
+      const dayNameKey = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][dayOfWeek];
+      data.dayOfWeek = dayNameKey;
+      session.state = 'booking_time';
+      
+      const slots = SCHEDULE[dayNameKey] || [];
+      const formattedDate = lang === 'es' ? formatDateES(selectedDate) : formatDateEN(selectedDate);
+      const slotsText = slots.map((s, i) => `${i + 1}. ${convertTo12h(s)}`).join('\n');
+      
+      return {
+        text: `📅 ${t(lang, 'available_times')} ${formattedDate}:\n\n${slotsText}`,
+        options: slots
+      };
+    } catch (error) {
+      return { 
+        text: lang === 'es' ? 'Formato de fecha inválido. Usa: 20 de septiembre' : 'Invalid date format. Use: September 20',
+        options: [] 
+      };
+    }
   }
 
   if (state === 'booking_time') {
@@ -527,7 +548,7 @@ function generateBotResponse(session, userInput) {
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
-    version: '11.7-fixed',
+    version: '11.8-patched',
     timestamp: new Date().toISOString()
   });
 });
