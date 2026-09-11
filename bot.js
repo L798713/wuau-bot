@@ -53,7 +53,7 @@ function getOrCreateSession(userId) {
 
 const translations = {
   es: {
-    choose_language: '🌍 ¡Hola! Hello!\nElige tu idioma / Choose your language:',
+    choose_language: '🌍 ¡Bienvenidos a WUAU PET SPA! | Welcome to WUAU PET SPA!\n\n¿En qué podemos ayudarte? | How can we help you?\n\nElige tu idioma / Choose your language:',
     spanish: '🇪🇸 Español',
     english: '🇬🇧 English',
     welcome: '¡Bienvenido a WUAU PET SPA 🐾!\n\n¿Cómo puedo ayudarte hoy?',
@@ -86,12 +86,6 @@ const translations = {
     booking_confirmed: '✅ ¡Cita confirmada!\n\n3516 Drumore Dr\n267-702-9312 (Zelle)\nDepósito: $30\n\nSi tienes preguntas, ¡deja un mensaje!',
     booking_cancelled: '❌ Cita cancelada. ¿Quieres intentar de nuevo?',
     invalid_input: '❌ No entendí tu respuesta. Intenta de nuevo.',
-    monday: 'Lunes',
-    tuesday: 'Martes',
-    wednesday: 'Miércoles',
-    thursday: 'Jueves',
-    friday: 'Viernes',
-    saturday: 'Sábado',
     confirm: 'Confirmar',
     cancel: 'Cancelar',
     back: 'Volver',
@@ -106,10 +100,11 @@ const translations = {
     one_pet: '1 mascota',
     two_pets: '2 mascotas',
     three_pets: '3 mascotas',
-    four_plus_pets: '4+ mascotas'
+    four_plus_pets: '4+ mascotas',
+    available_times: 'Horarios disponibles para'
   },
   en: {
-    choose_language: '🌍 ¡Hola! Hello!\nBienvenido | Welcome\nWUAU PET SPA 🐾\n\nElige tu idioma / Choose your language:',
+    choose_language: '🌍 ¡Bienvenidos a WUAU PET SPA! | Welcome to WUAU PET SPA!\n\n¿En qué podemos ayudarte? | How can we help you?\n\nElige tu idioma / Choose your language:',
     spanish: '🇪🇸 Español',
     english: '🇬🇧 English',
     welcome: 'Welcome to WUAU PET SPA 🐾!\n\nHow can I help you today?',
@@ -142,12 +137,6 @@ const translations = {
     booking_confirmed: '✅ Appointment confirmed!\n\n3516 Drumore Dr\n267-702-9312 (Zelle)\nDeposit: $30\n\nIf you have questions, leave a message!',
     booking_cancelled: '❌ Appointment cancelled. Want to try again?',
     invalid_input: '❌ I did not understand. Try again.',
-    monday: 'Monday',
-    tuesday: 'Tuesday',
-    wednesday: 'Wednesday',
-    thursday: 'Thursday',
-    friday: 'Friday',
-    saturday: 'Saturday',
     confirm: 'Confirm',
     cancel: 'Cancel',
     back: 'Back',
@@ -162,14 +151,15 @@ const translations = {
     one_pet: '1 pet',
     two_pets: '2 pets',
     three_pets: '3 pets',
-    four_plus_pets: '4+ pets'
+    four_plus_pets: '4+ pets',
+    available_times: 'Available times for'
   }
 };
 
 const t = (lang, key) => translations[lang][key] || translations['es'][key];
 
 const SERVICES = {
-  'baño': { es: 'baño_completo', en: 'bano_completo', duration: 120 },
+  'baño': { es: 'bano_completo', en: 'bano_completo', duration: 120 },
   'oidos': { es: 'limpieza_oidos', en: 'limpieza_oidos', duration: 30 },
   'uñas': { es: 'corte_unas', en: 'corte_unas', duration: 30 }
 };
@@ -188,6 +178,45 @@ const PRICES = {
   'oidos': { xs: 20, s: 25, m: 30, l: 35, xl: 40 },
   'uñas': { xs: 15, s: 20, m: 25, l: 30, xl: 35 }
 };
+
+const MONTH_NAMES_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const MONTH_NAMES_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const DAY_NAMES_ES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const DAY_NAMES_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+function getNextDates(days = 10) {
+  const today = new Date('2026-09-11');
+  const dates = [];
+  for (let i = 0; i < days; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() + i);
+    dates.push(date);
+  }
+  return dates;
+}
+
+function formatDateES(date) {
+  const dayName = DAY_NAMES_ES[date.getDay()];
+  const day = date.getDate();
+  const month = MONTH_NAMES_ES[date.getMonth()];
+  return `${dayName.charAt(0).toUpperCase() + dayName.slice(1)} ${day} de ${month}`;
+}
+
+function formatDateEN(date) {
+  const dayName = DAY_NAMES_EN[date.getDay()];
+  const day = date.getDate();
+  const month = MONTH_NAMES_EN[date.getMonth()];
+  return `${dayName} ${month} ${day}`;
+}
+
+function convertTo12h(time24) {
+  const [hours, mins] = time24.split(':');
+  let h = parseInt(hours);
+  const period = h >= 12 ? 'PM' : 'AM';
+  if (h > 12) h -= 12;
+  if (h === 0) h = 12;
+  return `${h}:${mins} ${period}`;
+}
 
 function generateBotResponse(session, userInput) {
   const input = userInput.toLowerCase().trim();
@@ -331,10 +360,13 @@ function generateBotResponse(session, userInput) {
     if (/^\d{10,}$/.test(input.replace(/\D/g, ''))) {
       data.phone = userInput;
       session.state = 'booking_date';
-      const dayOptions = [t(lang, 'monday'), t(lang, 'tuesday'), t(lang, 'wednesday'), t(lang, 'thursday'), t(lang, 'friday'), t(lang, 'saturday')];
+      
+      const nextDates = getNextDates(7);
+      const dateOptions = nextDates.map(date => lang === 'es' ? formatDateES(date) : formatDateEN(date));
+      
       return {
         text: t(lang, 'booking_date'),
-        options: dayOptions
+        options: dateOptions
       };
     }
     return {
@@ -344,20 +376,38 @@ function generateBotResponse(session, userInput) {
   }
 
   if (state === 'booking_date') {
-    const dayMap = { 'lunes': 'monday', 'martes': 'tuesday', 'miércoles': 'wednesday', 'jueves': 'thursday', 'viernes': 'friday', 'sábado': 'saturday', 'monday': 'monday', 'tuesday': 'tuesday', 'wednesday': 'wednesday', 'thursday': 'thursday', 'friday': 'friday', 'saturday': 'saturday' };
-    const day = dayMap[input.split(' ')[0]] || dayMap[input];
-    if (day) {
-      data.dayOfWeek = day;
+    const nextDates = getNextDates(7);
+    let selectedDate = null;
+    
+    for (let date of nextDates) {
+      const esFormat = formatDateES(date);
+      const enFormat = formatDateEN(date);
+      if (input.includes(esFormat.toLowerCase()) || input.includes(enFormat.toLowerCase())) {
+        selectedDate = date;
+        break;
+      }
+    }
+    
+    if (selectedDate) {
+      data.selectedDate = selectedDate;
+      const dayOfWeek = selectedDate.getDay();
+      const dayNameKey = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][dayOfWeek];
+      data.dayOfWeek = dayNameKey;
       session.state = 'booking_time';
-      const slots = SCHEDULE[day] || [];
+      
+      const slots = SCHEDULE[dayNameKey] || [];
+      const formattedDate = lang === 'es' ? formatDateES(selectedDate) : formatDateEN(selectedDate);
+      const slotsText = slots.map((s, i) => `${i + 1}. ${convertTo12h(s)}`).join('\n');
+      
       return {
-        text: t(lang, 'booking_time') + ':\n' + slots.map((s, i) => `${i + 1}. ${s}`).join('\n'),
+        text: `📅 ${t(lang, 'available_times')} ${formattedDate}:\n\n${slotsText}`,
         options: slots
       };
     }
+    
     return {
       text: t(lang, 'invalid_input'),
-      options: [t(lang, 'monday'), t(lang, 'tuesday'), t(lang, 'wednesday'), t(lang, 'thursday'), t(lang, 'friday'), t(lang, 'saturday')]
+      options: getNextDates(7).map(date => lang === 'es' ? formatDateES(date) : formatDateEN(date))
     };
   }
 
@@ -366,8 +416,12 @@ function generateBotResponse(session, userInput) {
       data.time = input;
       session.state = 'booking_confirm';
       const price = PRICES[data.service][data.size];
+      
+      const formattedDate = lang === 'es' ? formatDateES(data.selectedDate) : formatDateEN(data.selectedDate);
+      const time12h = convertTo12h(input);
+      
       return {
-        text: t(lang, 'booking_confirm') + `\n👤 ${data.clientName}\n🐾 ${data.petInfo}\n🛁 ${t(lang, SERVICES[data.service].es)}\n📅 ${t(lang, data.dayOfWeek)} - ${data.time}\n💰 $${price}\n\n${t(lang, 'confirm')}?`,
+        text: t(lang, 'booking_confirm') + `\n👤 ${data.clientName}\n🐾 ${data.petInfo}\n🛁 ${t(lang, SERVICES[data.service].es)}\n📅 ${formattedDate} - ${time12h}\n💰 $${price} (deposito $30 Zelle)`,
         options: [t(lang, 'confirm'), t(lang, 'cancel')]
       };
     }
@@ -402,7 +456,7 @@ function generateBotResponse(session, userInput) {
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
-    version: '11.5-polished',
+    version: '11.5-final',
     timestamp: new Date().toISOString()
   });
 });
@@ -427,7 +481,7 @@ app.post('/webhook', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 WUAU PET SPA Bot v11.5-POLISHED running on port ${PORT}`);
-  console.log(`✅ Bilingual - No size repetition`);
+  console.log(`\n🚀 WUAU PET SPA Bot v11.5-FINAL running on port ${PORT}`);
+  console.log(`✅ Bilingual - Full dates with AM/PM times`);
   console.log(`📍 Health: http://localhost:${PORT}/health\n`);
 });
