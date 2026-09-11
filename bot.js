@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { google } = require('googleapis');
+const Anthropic = require('@anthropic-ai/sdk');
 require('dotenv').config();
 
 const app = express();
@@ -14,6 +15,10 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY
+});
 
 let calendar, sheets;
 
@@ -218,6 +223,40 @@ function convertTo12h(time24) {
   return `${h}:${mins} ${period}`;
 }
 
+async function askClaudeForHelp(userMessage, lang) {
+  try {
+    const businessContext = `You are a helpful assistant for WUAU PET SPA, a pet grooming business in Philadelphia. 
+    
+BUSINESS INFORMATION:
+- Name: WUAU PET SPA
+- Address: 3516 Drumore Dr
+- Phone: 267-702-9312 (Zelle)
+- Hours: Mon-Thu 9am, 11am, 3pm | Fri 8:30am, 10am, 12pm, 4pm | Sat 8am, 12pm
+- Deposit: $30 (refundable with 24h cancellation)
+- Services: Full Bath (120 min, $45-100), Ear Cleaning (30 min, $20-40), Nail Trim (30 min, $15-35)
+- Prices vary by pet size: Extra Small, Small, Medium, Large, Extra Large
+- Add-ons: Flea shampoo ($5+), Detangling ($10+), Coat hydration ($10), Paw hydration ($5)
+
+Answer questions about the business in ${lang === 'es' ? 'Spanish' : 'English'}. Be friendly and helpful. Keep responses concise.`;
+
+    const response = await anthropic.messages.create({
+      model: 'claude-opus-4-1-20250805',
+      max_tokens: 200,
+      messages: [
+        {
+          role: 'user',
+          content: `${businessContext}\n\nCustomer question: ${userMessage}`
+        }
+      ]
+    });
+
+    return response.content[0].text;
+  } catch (error) {
+    console.error('Claude API error:', error);
+    return lang === 'es' ? '😊 Disculpa, tuve un problema. Por favor intenta de nuevo.' : '😊 Sorry, I had a problem. Please try again.';
+  }
+}
+
 function generateBotResponse(session, userInput) {
   const input = userInput.toLowerCase().trim();
   const { state, language, data } = session;
@@ -279,10 +318,8 @@ function generateBotResponse(session, userInput) {
         options: [t(lang, 'agendar_cita'), t(lang, 'ver_precios'), t(lang, 'servicios'), t(lang, 'ubicacion'), t(lang, 'contactar')]
       };
     }
-    return {
-      text: t(lang, 'invalid_input'),
-      options: [t(lang, 'agendar_cita'), t(lang, 'ver_precios'), t(lang, 'servicios'), t(lang, 'ubicacion'), t(lang, 'contactar')]
-    };
+    // Fallback: use Claude for unknown questions in main menu
+    return { useClaudeAPI: true, userMessage: userInput, lang };
   }
 
   if (state === 'booking_service') {
@@ -456,19 +493,30 @@ function generateBotResponse(session, userInput) {
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
-    version: '11.5-final',
+    version: '11.6-hybrid',
     timestamp: new Date().toISOString()
   });
 });
 
-app.post('/webhook', (req, res) => {
+app.post('/webhook', async (req, res) => {
   try {
     const { userId, message } = req.body;
     if (!userId || !message) {
       return res.status(400).json({ error: 'userId and message required' });
     }
     const session = getOrCreateSession(userId);
-    const response = generateBotResponse(session, message);
+    let response = generateBotResponse(session, message);
+    
+    // If Claude API fallback is needed
+    if (response.useClaudeAPI) {
+      const claudeResponse = await askClaudeForHelp(response.userMessage, response.lang);
+      return res.json({
+        success: true,
+        response: claudeResponse,
+        options: []
+      });
+    }
+    
     res.json({
       success: true,
       response: response.text,
@@ -481,7 +529,7 @@ app.post('/webhook', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 WUAU PET SPA Bot v11.5-FINAL running on port ${PORT}`);
-  console.log(`✅ Bilingual - Full dates with AM/PM times`);
+  console.log(`\n🚀 WUAU PET SPA Bot v11.6-HYBRID running on port ${PORT}`);
+  console.log(`✅ Hybrid mode: Guided flow + Claude API fallback`);
   console.log(`📍 Health: http://localhost:${PORT}/health\n`);
 });
