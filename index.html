@@ -320,6 +320,12 @@
     });
 
     messageInput.focus();
+    
+    // Send initial greeting when page loads
+    setTimeout(() => {
+      console.log('Sending initial greeting...');
+      sendMessage('start');
+    }, 800);
   </script>
 </body>
 </html>
