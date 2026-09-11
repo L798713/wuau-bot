@@ -94,6 +94,7 @@ const translations = {
     confirm: 'Confirmar',
     cancel: 'Cancelar',
     back: 'Volver',
+    other_date: 'Otra fecha',
     bano_completo: 'Baño Completo',
     limpieza_oidos: 'Limpieza de Oídos',
     corte_unas: 'Corte de Uñas',
@@ -145,6 +146,7 @@ const translations = {
     confirm: 'Confirm',
     cancel: 'Cancel',
     back: 'Back',
+    other_date: 'Other date',
     bano_completo: 'Full Bath',
     limpieza_oidos: 'Ear Cleaning',
     corte_unas: 'Nail Trim',
@@ -225,35 +227,45 @@ function convertTo12h(time24) {
 
 async function askClaudeForHelp(userMessage, lang) {
   try {
-    const businessContext = `You are a helpful assistant for WUAU PET SPA, a pet grooming business in Philadelphia. 
-    
-BUSINESS INFORMATION:
-- Name: WUAU PET SPA
+    const businessContext = lang === 'es' ? 
+      `Eres un asistente amable para WUAU PET SPA, una peluquería de mascotas.
+      
+INFORMACIÓN DEL NEGOCIO:
+- Dirección: 3516 Drumore Dr
+- Teléfono: 267-702-9312 (Zelle)
+- Horario: Lun-Jue 9am, 11am, 3pm | Vie 8:30am, 10am, 12pm, 4pm | Sab 8am, 12pm
+- Depósito: $30 (reembolsable con 24h de cancelación)
+- Servicios: Baño Completo (120 min, $45-100), Limpieza de Oídos (30 min, $20-40), Corte de Uñas (30 min, $15-35)
+- Los precios varían por tamaño de mascota
+
+Responde en español de manera amigable y concisa.` :
+      `You are a friendly assistant for WUAU PET SPA, a pet grooming business.
+      
+BUSINESS INFO:
 - Address: 3516 Drumore Dr
 - Phone: 267-702-9312 (Zelle)
 - Hours: Mon-Thu 9am, 11am, 3pm | Fri 8:30am, 10am, 12pm, 4pm | Sat 8am, 12pm
 - Deposit: $30 (refundable with 24h cancellation)
 - Services: Full Bath (120 min, $45-100), Ear Cleaning (30 min, $20-40), Nail Trim (30 min, $15-35)
-- Prices vary by pet size: Extra Small, Small, Medium, Large, Extra Large
-- Add-ons: Flea shampoo ($5+), Detangling ($10+), Coat hydration ($10), Paw hydration ($5)
+- Prices vary by pet size
 
-Answer questions about the business in ${lang === 'es' ? 'Spanish' : 'English'}. Be friendly and helpful. Keep responses concise.`;
+Answer in English in a friendly and concise way.`;
 
     const response = await anthropic.messages.create({
-      model: 'claude-opus-4-1-20250805',
-      max_tokens: 200,
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: 150,
       messages: [
         {
           role: 'user',
-          content: `${businessContext}\n\nCustomer question: ${userMessage}`
+          content: `${businessContext}\n\nPregunta: ${userMessage}`
         }
       ]
     });
 
-    return response.content[0].text;
+    return response.content[0].type === 'text' ? response.content[0].text : 'Error procesando respuesta';
   } catch (error) {
-    console.error('Claude API error:', error);
-    return lang === 'es' ? '😊 Disculpa, tuve un problema. Por favor intenta de nuevo.' : '😊 Sorry, I had a problem. Please try again.';
+    console.error('Claude API error:', error.message);
+    return lang === 'es' ? '😊 No pude procesar eso. Por favor intenta de nuevo.' : '😊 I could not process that. Please try again.';
   }
 }
 
@@ -318,7 +330,6 @@ function generateBotResponse(session, userInput) {
         options: [t(lang, 'agendar_cita'), t(lang, 'ver_precios'), t(lang, 'servicios'), t(lang, 'ubicacion'), t(lang, 'contactar')]
       };
     }
-    // Fallback: use Claude for unknown questions in main menu
     return { useClaudeAPI: true, userMessage: userInput, lang };
   }
 
@@ -400,6 +411,7 @@ function generateBotResponse(session, userInput) {
       
       const nextDates = getNextDates(7);
       const dateOptions = nextDates.map(date => lang === 'es' ? formatDateES(date) : formatDateEN(date));
+      dateOptions.push(t(lang, 'other_date'));
       
       return {
         text: t(lang, 'booking_date'),
@@ -413,6 +425,11 @@ function generateBotResponse(session, userInput) {
   }
 
   if (state === 'booking_date') {
+    if (input.includes('otra') || input.includes('other')) {
+      session.state = 'booking_custom_date';
+      return { text: lang === 'es' ? 'Escribe la fecha que prefieres (ej: 20 de septiembre)' : 'Write your preferred date (e.g., September 20)', options: [] };
+    }
+    
     const nextDates = getNextDates(7);
     let selectedDate = null;
     
@@ -444,7 +461,24 @@ function generateBotResponse(session, userInput) {
     
     return {
       text: t(lang, 'invalid_input'),
-      options: getNextDates(7).map(date => lang === 'es' ? formatDateES(date) : formatDateEN(date))
+      options: getNextDates(7).map(date => lang === 'es' ? formatDateES(date) : formatDateEN(date)).concat([t(lang, 'other_date')])
+    };
+  }
+
+  if (state === 'booking_custom_date') {
+    data.selectedDate = new Date(userInput);
+    const dayOfWeek = data.selectedDate.getDay();
+    const dayNameKey = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][dayOfWeek];
+    data.dayOfWeek = dayNameKey;
+    session.state = 'booking_time';
+    
+    const slots = SCHEDULE[dayNameKey] || [];
+    const formattedDate = lang === 'es' ? formatDateES(data.selectedDate) : formatDateEN(data.selectedDate);
+    const slotsText = slots.map((s, i) => `${i + 1}. ${convertTo12h(s)}`).join('\n');
+    
+    return {
+      text: `📅 ${t(lang, 'available_times')} ${formattedDate}:\n\n${slotsText}`,
+      options: slots
     };
   }
 
@@ -493,7 +527,7 @@ function generateBotResponse(session, userInput) {
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
-    version: '11.6-hybrid',
+    version: '11.7-fixed',
     timestamp: new Date().toISOString()
   });
 });
@@ -507,7 +541,6 @@ app.post('/webhook', async (req, res) => {
     const session = getOrCreateSession(userId);
     let response = generateBotResponse(session, message);
     
-    // If Claude API fallback is needed
     if (response.useClaudeAPI) {
       const claudeResponse = await askClaudeForHelp(response.userMessage, response.lang);
       return res.json({
@@ -529,7 +562,7 @@ app.post('/webhook', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 WUAU PET SPA Bot v11.6-HYBRID running on port ${PORT}`);
-  console.log(`✅ Hybrid mode: Guided flow + Claude API fallback`);
+  console.log(`\n🚀 WUAU PET SPA Bot v11.7-FIXED running on port ${PORT}`);
+  console.log(`✅ Claude API ready, Custom dates enabled`);
   console.log(`📍 Health: http://localhost:${PORT}/health\n`);
 });
