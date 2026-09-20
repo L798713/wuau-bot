@@ -348,6 +348,15 @@ function generateBotResponse(session, userInput) {
   const { state, language, data } = session;
   const lang = language || 'es';
 
+  // Si no tiene estado pero tiene lenguaje, ir a main_menu
+  if (state === 'language_select' && language) {
+    session.state = 'main_menu';
+    return {
+      text: t(lang, 'welcome'),
+      options: [t(lang, 'agendar_cita'), t(lang, 'ver_precios'), t(lang, 'servicios'), t(lang, 'ubicacion'), t(lang, 'contactar')]
+    };
+  }
+
   if (state === 'language_select') {
     if (input === 'start' || input === 'hola' || input === 'hello') {
       return {
