@@ -372,7 +372,10 @@ function generateBotResponse(session, userInput) {
       // If we have all sizes, move to breed
       if (data.sizes.length >= data.numPets) {
         session.state = 'booking_breed';
-        return { text: t(lang, 'booking_breed'), options: [] };
+        const breedText = lang === 'es' ? 
+          `Cuéntanos sobre tus ${data.numPets} mascotas (raza y nombre de cada una)` : 
+          `Tell us about your ${data.numPets} pets (breed and name for each)`;
+        return { text: breedText, options: [] };
       }
       
       // Ask for next pet's size
@@ -393,24 +396,9 @@ function generateBotResponse(session, userInput) {
   }
 
   if (state === 'booking_breed') {
-    if (!data.petInfos) {
-      data.petInfos = [];
-    }
-    data.petInfos.push(userInput);
-    
-    // If we have all pet infos, move to client name
-    if (data.petInfos.length >= data.numPets) {
-      session.state = 'booking_name';
-      return { text: t(lang, 'booking_name'), options: [] };
-    }
-    
-    // Ask for next pet's breed/name
-    const petNumber = data.petInfos.length + 1;
-    const nextText = lang === 'es' ? 
-      `Cuéntanos sobre tu mascota ${petNumber} (raza y nombre)` : 
-      `Tell us about pet ${petNumber} (breed and name)`;
-    
-    return { text: nextText, options: [] };
+    data.petInfo = userInput;
+    session.state = 'booking_name';
+    return { text: t(lang, 'booking_name'), options: [] };
   }
 
   if (state === 'booking_name') {
