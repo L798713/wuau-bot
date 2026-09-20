@@ -363,9 +363,28 @@ function generateBotResponse(session, userInput) {
     const sizeMap = { 'pequeño': 's', 'extra pequeño': 'xs', 'small': 's', 'extra small': 'xs', 'mediano': 'm', 'medium': 'm', 'grande': 'l', 'large': 'l', 'extra grande': 'xl', 'extra large': 'xl' };
     const size = sizeMap[input] || sizeMap[input.split(' ')[0]];
     if (size) {
-      data.size = size;
-      session.state = 'booking_breed';
-      return { text: t(lang, 'booking_breed'), options: [] };
+      // Initialize sizes array if not exists
+      if (!data.sizes) {
+        data.sizes = [];
+      }
+      data.sizes.push(size);
+      
+      // If we have all sizes, move to breed
+      if (data.sizes.length >= data.numPets) {
+        session.state = 'booking_breed';
+        return { text: t(lang, 'booking_breed'), options: [] };
+      }
+      
+      // Ask for next pet's size
+      const petNumber = data.sizes.length + 1;
+      const nextText = lang === 'es' ? 
+        `¿Qué tamaño tiene la mascota ${petNumber}?` : 
+        `What size is pet ${petNumber}?`;
+      
+      return {
+        text: nextText,
+        options: [t(lang, 'extra_pequeno'), t(lang, 'pequeno'), t(lang, 'mediano'), t(lang, 'grande'), t(lang, 'extra_grande')]
+      };
     }
     return {
       text: t(lang, 'invalid_input'),
