@@ -597,7 +597,10 @@ function generateBotResponse(session, userInput) {
     if (/^\d{2}:\d{2}$/.test(input)) {
       data.time = input;
       session.state = 'booking_confirm';
-      const price = PRICES[data.service][data.size];
+      
+      // Use first size from sizes array, or fall back to data.size
+      const size = data.sizes && data.sizes.length > 0 ? data.sizes[0] : data.size;
+      const price = PRICES[data.service][size];
       
       const formattedDate = lang === 'es' ? formatDateES(data.selectedDate) : formatDateEN(data.selectedDate);
       const time12h = convertTo12h(input);
