@@ -228,19 +228,77 @@ function convertTo12h(time24) {
 async function askClaudeForHelp(userMessage, lang) {
   try {
     const context = lang === 'es' ? 
-      'Eres un asistente amable para WUAU PET SPA. Información: 3516 Drumore Dr, 267-702-9312, Baño $45-100, Limpieza Oídos $20-40, Corte Uñas $15-35. Horario: Lun-Jue 9/11/3pm, Vie 8:30/10/12/4pm, Sab 8am/12pm. Responde en español.' :
-      'You are a friendly assistant for WUAU PET SPA. Info: 3516 Drumore Dr, 267-702-9312, Full Bath $45-100, Ear Cleaning $20-40, Nail Trim $15-35. Hours: Mon-Thu 9/11/3pm, Fri 8:30/10/12/4pm, Sat 8am/12pm. Answer in English.';
+      `Eres un asistente amable para WUAU PET SPA (grooming de mascotas).
+
+INFORMACIÓN DE CONTACTO:
+- Ubicación: 3516 Drumore Dr
+- Teléfono: 267-702-9312 (Zelle)
+- Depósito: $30 (reembolsable con 24h de cancelación)
+
+SERVICIOS Y PRECIOS:
+🛁 BAÑO COMPLETO (120 minutos):
+- Extra Pequeño: $45
+- Pequeño: $55
+- Mediano: $65
+- Grande: $80
+- Extra Grande: $100
+
+👂 LIMPIEZA DE OÍDOS (30 min): $20-40 según tamaño
+💅 CORTE DE UÑAS (30 min): $15-35 según tamaño
+
+✨ EXTRAS:
+- Shampoo antipulgas: desde $5
+- Desenredo: desde $10
+- Hidratación de manto: $10
+- Hidratación de huellas: $5
+
+HORARIOS DISPONIBLES:
+- Lunes a Jueves: 9:00 AM, 11:00 AM, 3:00 PM
+- Viernes: 8:30 AM, 10:00 AM, 12:00 PM, 4:00 PM
+- Sábado: 8:00 AM, 12:00 PM
+
+Responde amablemente en español, refiriéndote a los detalles específicos de WUAU PET SPA.` :
+      `You are a friendly assistant for WUAU PET SPA (pet grooming).
+
+CONTACT INFORMATION:
+- Location: 3516 Drumore Dr
+- Phone: 267-702-9312 (Zelle)
+- Deposit: $30 (refundable with 24h cancellation)
+
+SERVICES AND PRICES:
+🛁 FULL BATH (120 minutes):
+- Extra Small: $45
+- Small: $55
+- Medium: $65
+- Large: $80
+- Extra Large: $100
+
+👂 EAR CLEANING (30 min): $20-40 per size
+💅 NAIL TRIM (30 min): $15-35 per size
+
+✨ EXTRAS:
+- Flea shampoo: from $5
+- De-shedding: from $10
+- Coat hydration: $10
+- Paw hydration: $5
+
+AVAILABLE HOURS:
+- Monday to Thursday: 9:00 AM, 11:00 AM, 3:00 PM
+- Friday: 8:30 AM, 10:00 AM, 12:00 PM, 4:00 PM
+- Saturday: 8:00 AM, 12:00 PM
+
+Answer friendly in English, referring to specific WUAU PET SPA details.`;
 
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 100,
-      messages: [{ role: 'user', content: `${context}\n\nPregunta: ${userMessage}` }]
+      model: 'claude-sonnet-4-6',
+      max_tokens: 150,
+      messages: [{ role: 'user', content: `${context}\n\nPregunta del cliente: ${userMessage}` }]
     });
 
     return response.content[0].type === 'text' ? response.content[0].text : 'Error';
   } catch (error) {
     console.error('Claude error:', error.message);
-    return lang === 'es' ? 'No pude responder eso.' : 'I could not answer that.';
+    return lang === 'es' ? 'No pude responder eso. ¿Tienes otra pregunta?' : 'I could not answer that. Any other question?';
   }
 }
 
