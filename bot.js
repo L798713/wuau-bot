@@ -192,7 +192,7 @@ const DAY_NAMES_ES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'vie
 const DAY_NAMES_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 function getNextDates(days = 10) {
-  const today = new Date('2026-09-11');
+  const today = new Date();
   const dates = [];
   for (let i = 0; i < days; i++) {
     const date = new Date(today);
@@ -225,7 +225,46 @@ function convertTo12h(time24) {
   return `${h}:${mins} ${period}`;
 }
 
-async function askClaudeForHelp(userMessage, lang) {
+async function saveBookingToCalendar(bookingData) {
+  try {
+    if (!calendar) {
+      console.error('Calendar not initialized');
+      return false;
+    }
+
+    const startTime = new Date(bookingData.selectedDate);
+    const [hours, minutes] = bookingData.time.split(':').map(Number);
+    startTime.setHours(hours, minutes, 0);
+
+    const endTime = new Date(startTime);
+    endTime.setHours(endTime.getHours() + 2); // 2 hour appointment
+
+    const eventBody = {
+      summary: `🐾 ${bookingData.petInfo} - ${bookingData.service.toUpperCase()}`,
+      description: `Cliente: ${bookingData.clientName}\nTeléfono: ${bookingData.phone}\nMascotas: ${bookingData.petInfo}\nServicio: ${bookingData.service}\nDepósito: $30`,
+      start: { dateTime: startTime.toISOString() },
+      end: { dateTime: endTime.toISOString() },
+      reminders: {
+        useDefault: false,
+        overrides: [
+          { method: 'notification', minutes: 1440 }, // 24 hours before
+          { method: 'notification', minutes: 60 }    // 1 hour before
+        ]
+      }
+    };
+
+    const event = await calendar.events.insert({
+      calendarId: process.env.CALENDAR_ID,
+      resource: eventBody
+    });
+
+    console.log('✅ Event created:', event.data.id);
+    return true;
+  } catch (error) {
+    console.error('Calendar save error:', error.message);
+    return false;
+  }
+}
   try {
     const context = lang === 'es' ? 
       `Eres un asistente amable para WUAU PET SPA (grooming de mascotas).
@@ -531,7 +570,7 @@ function generateBotResponse(session, userInput) {
     const dayMatch = userInput.match(/\d+/);
     if (dayMatch) {
       const customDay = parseInt(dayMatch[0]);
-      const selectedDate = new Date('2026-09-11');
+      const selectedDate = new Date();
       selectedDate.setDate(customDay);
       
       data.selectedDate = selectedDate;
@@ -610,6 +649,19 @@ app.post('/webhook', async (req, res) => {
     }
     const session = getOrCreateSession(userId);
     let response = generateBotResponse(session, message);
+    
+    // Si confirma cita, guardar en Google Calendar
+    if (session.state === 'main_menu' && message.toLowerCase().includes('confirmar') && session.data.time) {
+      const bookingData = {
+        selectedDate: session.data.selectedDate,
+        time: session.data.time,
+        petInfo: session.data.petInfo,
+        service: session.data.service,
+        clientName: session.data.clientName,
+        phone: session.data.phone
+      };
+      await saveBookingToCalendar(bookingData);
+    }
     
     if (response.useClaudeAPI) {
       const claudeResponse = await askClaudeForHelp(response.userMessage, response.lang);
