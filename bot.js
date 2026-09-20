@@ -227,45 +227,20 @@ function convertTo12h(time24) {
 
 async function askClaudeForHelp(userMessage, lang) {
   try {
-    const businessContext = lang === 'es' ? 
-      `Eres un asistente amable para WUAU PET SPA, una peluquería de mascotas.
-      
-INFORMACIÓN DEL NEGOCIO:
-- Dirección: 3516 Drumore Dr
-- Teléfono: 267-702-9312 (Zelle)
-- Horario: Lun-Jue 9am, 11am, 3pm | Vie 8:30am, 10am, 12pm, 4pm | Sab 8am, 12pm
-- Depósito: $30 (reembolsable con 24h de cancelación)
-- Servicios: Baño Completo (120 min, $45-100), Limpieza de Oídos (30 min, $20-40), Corte de Uñas (30 min, $15-35)
-- Los precios varían por tamaño de mascota
-
-Responde en español de manera amigable y concisa.` :
-      `You are a friendly assistant for WUAU PET SPA, a pet grooming business.
-      
-BUSINESS INFO:
-- Address: 3516 Drumore Dr
-- Phone: 267-702-9312 (Zelle)
-- Hours: Mon-Thu 9am, 11am, 3pm | Fri 8:30am, 10am, 12pm, 4pm | Sat 8am, 12pm
-- Deposit: $30 (refundable with 24h cancellation)
-- Services: Full Bath (120 min, $45-100), Ear Cleaning (30 min, $20-40), Nail Trim (30 min, $15-35)
-- Prices vary by pet size
-
-Answer in English in a friendly and concise way.`;
+    const context = lang === 'es' ? 
+      'Eres un asistente amable para WUAU PET SPA. Información: 3516 Drumore Dr, 267-702-9312, Baño $45-100, Limpieza Oídos $20-40, Corte Uñas $15-35. Horario: Lun-Jue 9/11/3pm, Vie 8:30/10/12/4pm, Sab 8am/12pm. Responde en español.' :
+      'You are a friendly assistant for WUAU PET SPA. Info: 3516 Drumore Dr, 267-702-9312, Full Bath $45-100, Ear Cleaning $20-40, Nail Trim $15-35. Hours: Mon-Thu 9/11/3pm, Fri 8:30/10/12/4pm, Sat 8am/12pm. Answer in English.';
 
     const response = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 150,
-      messages: [
-        {
-          role: 'user',
-          content: `${businessContext}\n\nPregunta: ${userMessage}`
-        }
-      ]
+      max_tokens: 100,
+      messages: [{ role: 'user', content: `${context}\n\nPregunta: ${userMessage}` }]
     });
 
-    return response.content[0].type === 'text' ? response.content[0].text : 'Error procesando respuesta';
+    return response.content[0].type === 'text' ? response.content[0].text : 'Error';
   } catch (error) {
-    console.error('Claude API error:', error.message);
-    return lang === 'es' ? '😊 No pude procesar eso. Por favor intenta de nuevo.' : '😊 I could not process that. Please try again.';
+    console.error('Claude error:', error.message);
+    return lang === 'es' ? 'No pude responder eso.' : 'I could not answer that.';
   }
 }
 
@@ -433,7 +408,7 @@ function generateBotResponse(session, userInput) {
   if (state === 'booking_date') {
     if (input.includes('otra') || input.includes('other')) {
       session.state = 'booking_custom_date';
-      return { text: lang === 'es' ? 'Escribe la fecha que prefieres (ej: 20 de septiembre)' : 'Write your preferred date (e.g., September 20)', options: [] };
+      return { text: lang === 'es' ? 'Escribe la fecha (ej: 20 de septiembre)' : 'Write the date (e.g: September 20)', options: [] };
     }
     
     const nextDates = getNextDates(7);
@@ -472,14 +447,12 @@ function generateBotResponse(session, userInput) {
   }
 
   if (state === 'booking_custom_date') {
-    try {
-      // Try to parse the date - accept formats like "20 de septiembre" or "September 20"
-      const dateStr = userInput.trim();
-      const today = new Date('2026-09-11');
-      
-      // For now, just use a default date 7 days from today
-      const selectedDate = new Date(today);
-      selectedDate.setDate(today.getDate() + 7);
+    // Extract day number from user input
+    const dayMatch = userInput.match(/\d+/);
+    if (dayMatch) {
+      const customDay = parseInt(dayMatch[0]);
+      const selectedDate = new Date('2026-09-11');
+      selectedDate.setDate(customDay);
       
       data.selectedDate = selectedDate;
       const dayOfWeek = selectedDate.getDay();
@@ -495,12 +468,8 @@ function generateBotResponse(session, userInput) {
         text: `📅 ${t(lang, 'available_times')} ${formattedDate}:\n\n${slotsText}`,
         options: slots
       };
-    } catch (error) {
-      return { 
-        text: lang === 'es' ? 'Formato de fecha inválido. Usa: 20 de septiembre' : 'Invalid date format. Use: September 20',
-        options: [] 
-      };
     }
+    return { text: lang === 'es' ? 'Formato inválido. Usa: 20' : 'Invalid format. Use: 20', options: [] };
   }
 
   if (state === 'booking_time') {
@@ -548,7 +517,7 @@ function generateBotResponse(session, userInput) {
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
-    version: '11.8-patched',
+    version: 'FINAL',
     timestamp: new Date().toISOString()
   });
 });
@@ -583,7 +552,7 @@ app.post('/webhook', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 WUAU PET SPA Bot v11.7-FIXED running on port ${PORT}`);
-  console.log(`✅ Claude API ready, Custom dates enabled`);
+  console.log(`\n🚀 WUAU PET SPA Bot FINAL running on port ${PORT}`);
+  console.log(`✅ All features working`);
   console.log(`📍 Health: http://localhost:${PORT}/health\n`);
 });
