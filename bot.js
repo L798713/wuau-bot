@@ -393,9 +393,24 @@ function generateBotResponse(session, userInput) {
   }
 
   if (state === 'booking_breed') {
-    data.petInfo = userInput;
-    session.state = 'booking_name';
-    return { text: t(lang, 'booking_name'), options: [] };
+    if (!data.petInfos) {
+      data.petInfos = [];
+    }
+    data.petInfos.push(userInput);
+    
+    // If we have all pet infos, move to client name
+    if (data.petInfos.length >= data.numPets) {
+      session.state = 'booking_name';
+      return { text: t(lang, 'booking_name'), options: [] };
+    }
+    
+    // Ask for next pet's breed/name
+    const petNumber = data.petInfos.length + 1;
+    const nextText = lang === 'es' ? 
+      `Cuéntanos sobre tu mascota ${petNumber} (raza y nombre)` : 
+      `Tell us about pet ${petNumber} (breed and name)`;
+    
+    return { text: nextText, options: [] };
   }
 
   if (state === 'booking_name') {
