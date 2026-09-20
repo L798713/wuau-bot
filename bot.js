@@ -228,40 +228,51 @@ function convertTo12h(time24) {
 async function saveBookingToCalendar(bookingData) {
   try {
     if (!calendar) {
-      console.error('Calendar not initialized');
+      console.error('❌ Calendar not initialized');
       return false;
     }
+
+    const calendarId = process.env.CALENDAR_ID;
+    if (!calendarId) {
+      console.error('❌ CALENDAR_ID not configured');
+      return false;
+    }
+
+    console.log(`📅 Saving to calendar: ${calendarId.substring(0, 20)}...`);
 
     const startTime = new Date(bookingData.selectedDate);
     const [hours, minutes] = bookingData.time.split(':').map(Number);
     startTime.setHours(hours, minutes, 0);
 
     const endTime = new Date(startTime);
-    endTime.setHours(endTime.getHours() + 2); // 2 hour appointment
+    endTime.setHours(endTime.getHours() + 2);
 
     const eventBody = {
       summary: `🐾 ${bookingData.petInfo} - ${bookingData.service.toUpperCase()}`,
       description: `Cliente: ${bookingData.clientName}\nTeléfono: ${bookingData.phone}\nMascotas: ${bookingData.petInfo}\nServicio: ${bookingData.service}\nDepósito: $30`,
-      start: { dateTime: startTime.toISOString() },
-      end: { dateTime: endTime.toISOString() },
+      start: { dateTime: startTime.toISOString(), timeZone: 'America/New_York' },
+      end: { dateTime: endTime.toISOString(), timeZone: 'America/New_York' },
       reminders: {
         useDefault: false,
         overrides: [
-          { method: 'notification', minutes: 1440 }, // 24 hours before
-          { method: 'notification', minutes: 60 }    // 1 hour before
+          { method: 'notification', minutes: 1440 },
+          { method: 'notification', minutes: 60 }
         ]
       }
     };
 
     const event = await calendar.events.insert({
-      calendarId: process.env.CALENDAR_ID,
+      calendarId: calendarId,
       resource: eventBody
     });
 
     console.log('✅ Event created:', event.data.id);
     return true;
   } catch (error) {
-    console.error('Calendar save error:', error.message);
+    console.error('❌ Calendar save error:', error.message);
+    if (error.response && error.response.data) {
+      console.error('Error details:', JSON.stringify(error.response.data, null, 2));
+    }
     return false;
   }
 }
