@@ -248,18 +248,13 @@ async function saveBookingToCalendar(bookingData) {
     endTime.setHours(endTime.getHours() + 2);
 
     const eventBody = {
-      summary: `🐾 ${bookingData.petInfo} - ${bookingData.service.toUpperCase()}`,
-      description: `Cliente: ${bookingData.clientName}\nTeléfono: ${bookingData.phone}\nMascotas: ${bookingData.petInfo}\nServicio: ${bookingData.service}\nDepósito: $30`,
-      start: { dateTime: startTime.toISOString(), timeZone: 'America/New_York' },
-      end: { dateTime: endTime.toISOString(), timeZone: 'America/New_York' },
-      reminders: {
-        useDefault: false,
-        overrides: [
-          { method: 'notification', minutes: 1440 },
-          { method: 'notification', minutes: 60 }
-        ]
-      }
+      summary: `🐾 ${bookingData.petInfo} - ${bookingData.service}`,
+      description: `Cliente: ${bookingData.clientName}\nTeléfono: ${bookingData.phone}`,
+      start: { dateTime: startTime.toISOString() },
+      end: { dateTime: endTime.toISOString() }
     };
+
+    console.log('📝 Creating event:', eventBody.summary);
 
     const event = await calendar.events.insert({
       calendarId: calendarId,
@@ -269,9 +264,9 @@ async function saveBookingToCalendar(bookingData) {
     console.log('✅ Event created:', event.data.id);
     return true;
   } catch (error) {
-    console.error('❌ Calendar save error:', error.message);
-    if (error.response && error.response.data) {
-      console.error('Error details:', JSON.stringify(error.response.data, null, 2));
+    console.error('❌ Calendar error:', error.message);
+    if (error.errors) {
+      console.error('Errors:', error.errors);
     }
     return false;
   }
