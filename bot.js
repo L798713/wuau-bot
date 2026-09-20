@@ -265,6 +265,8 @@ async function saveBookingToCalendar(bookingData) {
     return false;
   }
 }
+
+async function askClaudeForHelp(userMessage, lang) {
   try {
     const context = lang === 'es' ? 
       `Eres un asistente amable para WUAU PET SPA (grooming de mascotas).
